@@ -1,10 +1,23 @@
-const express = require("express");
+const express = require('express');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+
+const authRoutes = require('./routes/authRoutes');
+const { notFound } = require('./middleware/notFoundMiddleware');
+const { errorHandler } = require('./middleware/errorMiddleware');
+
 const app = express();
 
+// Middlewares
+app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
-app.get("/", (req, res) => {
-  res.send("TaxPal Backend Running ✅");
-});
+// Routes
+app.use('/api/auth', authRoutes);
+
+// Error Handling
+app.use(notFound);
+app.use(errorHandler);
 
 module.exports = app;
