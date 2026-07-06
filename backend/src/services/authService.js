@@ -2,8 +2,22 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { generateToken } = require('../utils/jwt');
 
+const formatUserResponse = (user) => {
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    country: user.country,
+    incomeBracket: user.income_bracket
+  };
+};
+
 const registerUser = async (userData) => {
   const { name, email, password, country, incomeBracket } = userData;
+
+const normalizedIncomeBracket = incomeBracket
+  ? incomeBracket.toLowerCase()
+  : "";
 
   // Check duplicate email
   const userExists = await User.findOne({ email });
@@ -23,17 +37,15 @@ const registerUser = async (userData) => {
     email,
     password: hashedPassword,
     country,
-    income_bracket: incomeBracket,
+    income_bracket: normalizedIncomeBracket,
   });
 
   // Generate token
   const token = generateToken(user._id);
 
-  // Exclude password from the returned object
-  const { password: _pw, ...userWithoutPassword } = user.toObject();
-
+  // Exclude password and map fields for the returned object
   return {
-    user: userWithoutPassword,
+    user: formatUserResponse(user),
     token,
   };
 };
@@ -58,10 +70,8 @@ const loginUser = async (email, password) => {
   // Generate token
   const token = generateToken(user._id);
 
-  const { password: _pw, ...userWithoutPassword } = user.toObject();
-
   return {
-    user: userWithoutPassword,
+    user: formatUserResponse(user),
     token,
   };
 };
@@ -73,7 +83,7 @@ const getCurrentUser = async (userId) => {
     error.statusCode = 404;
     throw error;
   }
-  return user;
+  return formatUserResponse(user);
 };
 
 module.exports = {

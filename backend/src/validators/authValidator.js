@@ -5,6 +5,7 @@ const registerValidation = [
   check('email', 'Please include a valid email').isEmail(),
   check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
   check('country', 'Country is required').not().isEmpty(),
+  check('incomeBracket', 'Invalid income bracket').optional({ checkFalsy: true }).isIn(['low', 'middle', 'high']),
 ];
 
 const loginValidation = [
