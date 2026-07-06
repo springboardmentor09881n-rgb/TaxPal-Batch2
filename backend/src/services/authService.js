@@ -8,8 +8,8 @@ const registerUser = async (userData) => {
   // Check duplicate email
   const userExists = await User.findOne({ email });
   if (userExists) {
-    const error = new Error('User already exists with this email');
-    error.statusCode = 400;
+    const error = new Error('User with this email already exists.');
+    error.statusCode = 409;
     throw error;
   }
 
@@ -42,7 +42,7 @@ const loginUser = async (email, password) => {
   // Find user
   const user = await User.findOne({ email });
   if (!user) {
-    const error = new Error('Invalid credentials');
+    const error = new Error('Invalid email or password.');
     error.statusCode = 401;
     throw error;
   }
@@ -50,7 +50,7 @@ const loginUser = async (email, password) => {
   // Compare password
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    const error = new Error('Invalid credentials');
+    const error = new Error('Invalid email or password.');
     error.statusCode = 401;
     throw error;
   }
