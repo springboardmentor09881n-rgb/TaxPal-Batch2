@@ -1,0 +1,127 @@
+<div class="dashboard-header">
+  <div>
+    <h1>Financial Dashboard</h1>
+    <p class="text-muted">Welcome back, Alex. Here's a summary of your finances.</p>
+  </div>
+  <div class="dashboard-actions">
+    <a routerLink="/income" class="btn-primary">Record Income</a>
+    <a routerLink="/expense" class="btn-primary btn-danger">Record Expense</a>
+  </div>
+</div>
+
+<div *ngIf="isLoading" class="loading-state">
+  <p>Loading dashboard data...</p>
+</div>
+
+<div *ngIf="!isLoading && summary">
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <div class="card summary-card">
+      <h3>Monthly Income</h3>
+      <div class="amount">{{ currencySymbol }}{{ summary.monthlyIncome | number:'1.2-2' }}</div>
+      <div class="trend positive">↑ {{ summary.incomeTrend }}% from last month</div>
+    </div>
+    <div class="card summary-card">
+      <h3>Monthly Expenses</h3>
+      <div class="amount">{{ currencySymbol }}{{ summary.monthlyExpenses | number:'1.2-2' }}</div>
+      <div class="trend negative">↓ {{ summary.expenseTrend }}% from last month</div>
+    </div>
+    <div class="card summary-card">
+      <h3>Estimated Tax Due</h3>
+      <div class="amount">{{ currencySymbol }}{{ summary.estimatedTaxDue | number:'1.2-2' }}</div>
+      <div class="trend neutral">Based on current brackets</div>
+    </div>
+    <div class="card summary-card">
+      <h3>Savings Rate</h3>
+      <div class="amount">{{ summary.savingsRate }}%</div>
+      <div class="trend positive">↑ {{ summary.savingsTrend }}% from last month</div>
+    </div>
+  </div>
+
+  <!-- Charts Area (Placeholders) -->
+  <div class="charts-row">
+    <div class="card chart-card flex-2">
+      <h3>Income vs Expenses</h3>
+      <div class="chart-placeholder">
+        <div class="bar-chart">
+          <!-- Dynamic Bar -->
+          <div class="bar-group" style="flex: 2; margin-right: 2rem;">
+            <div class="bar bar-income" [style.height.%]="incomePercent" title="Income"></div>
+            <div class="bar bar-expense" [style.height.%]="expensePercent" title="Expenses"></div>
+          </div>
+          <!-- Historical Bars (Mock) -->
+          <div class="bar-group" style="opacity: 0.5;">
+            <div class="bar bar-income" style="height: 70%"></div>
+            <div class="bar bar-expense" style="height: 35%"></div>
+          </div>
+          <div class="bar-group" style="opacity: 0.3;">
+            <div class="bar bar-income" style="height: 80%"></div>
+            <div class="bar bar-expense" style="height: 45%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-legend" style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: center; font-size: 0.9rem; color: var(--text-muted);">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="width: 12px; height: 12px; background-color: var(--primary-color); border-radius: 2px;"></div>
+          <span>Income: <strong style="color: var(--text-dark);">{{ currencySymbol }}{{ summary.monthlyIncome | number:'1.0-0' }}</strong></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="width: 12px; height: 12px; background-color: var(--error-color); border-radius: 2px;"></div>
+          <span>Expenses: <strong style="color: var(--text-dark);">{{ currencySymbol }}{{ summary.monthlyExpenses | number:'1.0-0' }}</strong></span>
+        </div>
+      </div>
+    </div>
+    <div class="card chart-card flex-1">
+      <h3>Expense Breakdown</h3>
+      <div class="chart-placeholder">
+        <div class="pie-chart-placeholder" [style.background]="'conic-gradient(var(--error-color) 0% ' + expenseTotalPercent + '%, var(--primary-color) ' + expenseTotalPercent + '% 100%)'"></div>
+      </div>
+      <div class="chart-legend" style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: center; font-size: 0.9rem; color: var(--text-muted);">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="width: 12px; height: 12px; background-color: var(--primary-color); border-radius: 2px;"></div>
+          <span>Income <strong style="color: var(--text-dark);">({{ 100 - expenseTotalPercent | number:'1.0-0' }}%)</strong></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="width: 12px; height: 12px; background-color: var(--error-color); border-radius: 2px;"></div>
+          <span>Expenses <strong style="color: var(--text-dark);">({{ expenseTotalPercent | number:'1.0-0' }}%)</strong></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="card mt-2">
+    <div class="card-header">
+      <h3>Recent Transactions</h3>
+      <a routerLink="/transactions" class="text-primary text-sm">View All</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let tx of recentTransactions">
+            <td>{{ tx.date }}</td>
+            <td>{{ tx.description }}</td>
+            <td>{{ tx.category }}</td>
+            <td [ngClass]="tx.type === 'income' ? 'text-success' : 'text-danger'">
+              {{ tx.type === 'income' ? '+' : '-' }}{{ currencySymbol }}{{ tx.amount | number:'1.2-2' }}
+            </td>
+            <td>
+              <span class="badge" [ngClass]="tx.type === 'income' ? 'badge-success' : 'badge-danger'">
+                {{ tx.type | titlecase }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
