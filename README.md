@@ -110,19 +110,6 @@ TaxPal-Batch2
 
 ---
 
-# 🎯 Current Focus
-
-The frontend UI has been completed, and the backend project structure, database layer, and authentication APIs have been implemented.
-
-The team is currently focused on:
-- Testing the backend modules as a complete system.
-- Completing and validating the remaining Transaction APIs.
-- Integrating the frontend with the backend APIs.
-- Performing end-to-end testing after integration.
-- Preparing the application for Milestone 1 submission.
-
----
-
 # 🎯 Team Objective
 
 Deliver a fully functional Milestone 1 application with:
