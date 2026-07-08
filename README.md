@@ -1,79 +1,138 @@
 # TaxPal-Batch2
 # TaxPal
 
-TaxPal is a full-stack web application designed to help freelancers and self-employed individuals manage their finances efficiently. The application enables users to track income and expenses, monitor transactions, estimate taxes, and generate financial reports.
+TaxPal is a full-stack web application designed to help freelancers and self-employed individuals manage their finances efficiently. The application enables users to track income and expenses, manage transactions, estimate taxes, and generate financial reports.
 
-## Tech Stack
+---
 
-### Frontend
+# 🚀 Tech Stack
+
+## Frontend
 - Angular
 - TypeScript
 - HTML
 - CSS
 
-### Backend
+## Backend
 - Node.js
 - Express.js
 
-### Database
+## Database
 - MongoDB Atlas
 - Mongoose
 
-## Project Structure
+---
+
+# 📁 Project Structure
 
 ```
 TaxPal-Batch2
 │
-├── frontend
+├── frontend/
 │
-├── backend
-│   ├── src
-│   │   ├── config
-│   │   ├── controllers
-│   │   ├── middleware
-│   │   ├── models
-│   │   ├── routes
-│   │   ├── services
-│   │   ├── utils
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── middleware/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── utils/
 │   │   ├── app.js
 │   │   └── server.js
 │   │
 │   ├── package.json
+│   ├── package-lock.json
+│   ├── .gitignore
 │   └── .env.example
 │
 └── README.md
 ```
 
-## Milestone 1
+---
 
-- User Authentication
+# 📌 Milestone 1 Features
+
+- User Registration & Login
 - Income Management
 - Expense Management
 - Dashboard
 - MongoDB Integration
 
-## Git Workflow
+---
 
-- Main branch contains stable code.
+# 📊 Current Project Status
+
+## ✅ Completed
+- Repository setup
+- Frontend project setup
+- Backend project setup
+- MongoDB Atlas configuration
+- Database models implemented
+- Authentication APIs (Register & Login)
+- Frontend UI implementation
+- Backend folder structure
+- Git workflow established
+
+## 🔄 In Progress
+- End-to-end backend testing
+- Transaction API implementation and testing
+- Frontend and Backend integration
+- Module integration testing
+
+## ⏳ Upcoming
+- Complete frontend-backend integration
+- End-to-end application testing
+- Bug fixing and optimization
+- Milestone 1 review and completion
+
+---
+
+# 🔀 Git Workflow
+
+- `main` contains the latest stable code.
 - Every team member works on their own branch.
-- Push changes only to your branch.
-- Create a Pull Request after completing your task.
-- Code will be reviewed before merging into the main branch.
+- Changes are pushed only to individual branches.
+- Pull Requests are reviewed before merging into `main`.
 
-## Current Status
+---
 
-- Project setup completed
-- Backend structure completed
-- Database models completed
-- MongoDB Atlas configured
-- Frontend development in progress
-- Backend API development in progress
+# 👥 Development Workflow
 
-## Team Workflow
-
-1. Pull the latest changes from `main`.
-2. Switch to your branch.
+1. Pull the latest changes from the `main` branch.
+2. Switch to your respective branch.
 3. Complete your assigned task.
-4. Commit and push your code.
-5. Create a Pull Request.
-6. Wait for review before merging.
+4. Test the implementation locally.
+5. Commit and push changes to your branch.
+6. Create a Pull Request.
+7. After review, merge into `main`.
+
+---
+
+# 🎯 Current Focus
+
+The frontend UI has been completed, and the backend project structure, database layer, and authentication APIs have been implemented.
+
+The team is currently focused on:
+- Testing the backend modules as a complete system.
+- Completing and validating the remaining Transaction APIs.
+- Integrating the frontend with the backend APIs.
+- Performing end-to-end testing after integration.
+- Preparing the application for Milestone 1 submission.
+
+---
+
+# 🎯 Team Objective
+
+Deliver a fully functional Milestone 1 application with:
+- Secure user authentication
+- Income and expense management
+- RESTful backend APIs
+- MongoDB Atlas integration
+- Responsive Angular frontend
+- Successful frontend-backend integration
+- Stable and thoroughly tested implementation
+
+
+
