@@ -6,6 +6,8 @@ const formatUserResponse = (user) => {
   return {
     id: user._id,
     name: user.name,
+    fullName: user.name,
+    username: user.username,
     email: user.email,
     country: user.country,
     incomeBracket: user.income_bracket
@@ -13,16 +15,15 @@ const formatUserResponse = (user) => {
 };
 
 const registerUser = async (userData) => {
-  const { name, email, password, country, incomeBracket } = userData;
+  const { username, name, fullName, email, password, country, incomeBracket, income_bracket } = userData;
 
-const normalizedIncomeBracket = incomeBracket
-  ? incomeBracket.toLowerCase()
-  : "";
+  const actualName = fullName || name;
+  const actualIncomeBracket = (incomeBracket || income_bracket || "").toLowerCase();
 
-  // Check duplicate email
-  const userExists = await User.findOne({ email });
+  // Check duplicate email or username
+  const userExists = await User.findOne({ $or: [{ email }, { username }] });
   if (userExists) {
-    const error = new Error('User with this email already exists.');
+    const error = new Error('User with this email or username already exists.');
     error.statusCode = 409;
     throw error;
   }
@@ -33,28 +34,31 @@ const normalizedIncomeBracket = incomeBracket
 
   // Create new user
   const user = await User.create({
-    name,
+    name: actualName,
+    username,
     email,
     password: hashedPassword,
     country,
-    income_bracket: normalizedIncomeBracket,
+    income_bracket: actualIncomeBracket,
   });
 
   // Generate token
   const token = generateToken(user._id);
 
-  // Exclude password and map fields for the returned object
   return {
     user: formatUserResponse(user),
     token,
   };
 };
 
-const loginUser = async (email, password) => {
-  // Find user
-  const user = await User.findOne({ email });
+const loginUser = async (identifier, password) => {
+  // Find user by email OR username
+  const user = await User.findOne({
+    $or: [{ email: identifier }, { username: identifier }]
+  });
+  
   if (!user) {
-    const error = new Error('Invalid email or password.');
+    const error = new Error('Invalid email, username, or password.');
     error.statusCode = 401;
     throw error;
   }
@@ -62,7 +66,7 @@ const loginUser = async (email, password) => {
   // Compare password
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    const error = new Error('Invalid email or password.');
+    const error = new Error('Invalid email, username, or password.');
     error.statusCode = 401;
     throw error;
   }

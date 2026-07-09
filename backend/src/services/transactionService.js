@@ -1,11 +1,25 @@
 const Transaction = require("../models/Transaction");
 
+const formatTransaction = (t) => {
+  return {
+    id: t._id,
+    type: t.type,
+    category: t.category,
+    amount: t.amount,
+    date: t.date,
+    description: t.description,
+    notes: t.notes,
+  };
+};
+
 const createTransaction = async (transactionData) => {
-  return await Transaction.create(transactionData);
+  const transaction = await Transaction.create(transactionData);
+  return formatTransaction(transaction);
 };
 
 const getAllTransactions = async (userId) => {
-  return await Transaction.find({ userId }).sort({ date: -1 });
+  const transactions = await Transaction.find({ userId }).sort({ date: -1 });
+  return transactions.map(formatTransaction);
 };
 
 const getTransactionById = async (id, userId) => {
@@ -15,7 +29,7 @@ const getTransactionById = async (id, userId) => {
     error.statusCode = 404;
     throw error;
   }
-  return transaction;
+  return formatTransaction(transaction);
 };
 
 const updateTransaction = async (id, userId, updateData) => {
@@ -29,7 +43,7 @@ const updateTransaction = async (id, userId, updateData) => {
     error.statusCode = 404;
     throw error;
   }
-  return transaction;
+  return formatTransaction(transaction);
 };
 
 const deleteTransaction = async (id, userId) => {
@@ -39,7 +53,7 @@ const deleteTransaction = async (id, userId) => {
     error.statusCode = 404;
     throw error;
   }
-  return transaction;
+  return formatTransaction(transaction);
 };
 
 module.exports = {
