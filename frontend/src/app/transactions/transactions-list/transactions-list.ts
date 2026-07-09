@@ -24,8 +24,16 @@ export class TransactionsList implements OnInit {
 
   ngOnInit(): void {
     this.currencySymbol = this.authService.getCurrencySymbol();
-    this.allTransactions = this.transactionService.getTransactions();
-    this.applyFilter('all');
+    
+    this.transactionService.transactions$.subscribe(data => {
+      this.allTransactions = data;
+      this.applyFilter(this.filter);
+    });
+
+    // Only load transactions from server if we haven't loaded them yet
+    if (!this.transactionService.isLoaded) {
+      this.transactionService.loadTransactions().subscribe();
+    }
   }
 
   applyFilter(type: 'all' | 'income' | 'expense') {
@@ -34,6 +42,21 @@ export class TransactionsList implements OnInit {
       this.displayedTransactions = [...this.allTransactions];
     } else {
       this.displayedTransactions = this.allTransactions.filter(t => t.type === type);
+    }
+  }
+
+  onDelete(id: string | undefined): void {
+    if (!id) return;
+    if (confirm('Are you sure you want to delete this transaction?')) {
+      this.transactionService.deleteTransaction(id).subscribe({
+        next: () => {
+          // Central store will reload and emit new list automatically
+        },
+        error: (err) => {
+          console.error('Delete error', err);
+          alert('Failed to delete transaction.');
+        }
+      });
     }
   }
 }

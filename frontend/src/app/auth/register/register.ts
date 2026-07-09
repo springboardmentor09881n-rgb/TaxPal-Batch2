@@ -60,7 +60,7 @@ export class Register {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = 'Registration failed. Please try again.';
+        this.errorMessage = err.error?.message || 'Registration failed. Please try again.';
         console.error('Registration error', err);
       }
     });

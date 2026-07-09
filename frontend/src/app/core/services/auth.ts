@@ -1,58 +1,62 @@
 import { Injectable } from '@angular/core';
-import { delay, of, Observable, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  // In-memory mock database
-  private users: any[] = [
-    { username: 'demo', password: 'password', name: 'Demo User', email: 'demo@example.com', country: 'IN' }
-  ];
+  private apiUrl = `${environment.apiUrl}/auth`;
+  private currentUserSubject = new BehaviorSubject<any>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
 
-  private currentUser: any = null;
+  constructor(private http: HttpClient) {
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      try {
+        this.currentUserSubject.next(JSON.parse(storedUser));
+      } catch (e) {
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('token');
+      }
+    }
+  }
 
-  constructor() {}
+  public get currentUser(): any {
+    return this.currentUserSubject.value;
+  }
+
+  public get token(): string | null {
+    return localStorage.getItem('token');
+  }
 
   login(credentials: any): Observable<any> {
-    const user = this.users.find(u => u.username === credentials.username && u.password === credentials.password);
-    
-    if (!user) {
-      return throwError(() => new Error('Invalid username or password'));
-    }
-
-    this.currentUser = user; // Track logged in user
-
-    return of({
-      token: 'mock-jwt-token',
-      user: {
-        id: '1',
-        name: user.name,
-        email: user.email,
-        country: user.country
-      }
-    });
+    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
+      tap(res => {
+        if (res.success && res.data) {
+          localStorage.setItem('token', res.data.token);
+          localStorage.setItem('currentUser', JSON.stringify(res.data.user));
+          this.currentUserSubject.next(res.data.user);
+        }
+      })
+    );
   }
 
   register(userData: any): Observable<any> {
-    const newUser = {
-      username: userData.username,
-      password: userData.password,
-      name: userData.fullName,
-      email: userData.email,
-      country: userData.country
-    };
-    
-    this.users.push(newUser);
+    return this.http.post<any>(`${this.apiUrl}/register`, userData);
+  }
 
-    return of({
-      message: 'Registration successful',
-      user: newUser
-    });
+  logout(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('currentUser');
+    this.currentUserSubject.next(null);
   }
 
   getCurrencySymbol(): string {
-    const country = this.currentUser ? this.currentUser.country : 'IN'; // Default to IN (Rupees)
+    const user = this.currentUser;
+    const country = user ? user.country : 'IN'; // Default to IN (Rupees)
     switch (country) {
       case 'US': return '$';
       case 'CA': return 'CA$';

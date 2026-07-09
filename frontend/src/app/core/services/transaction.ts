@@ -1,5 +1,9 @@
 import { Injectable } from '@angular/core';
-import { delay, of, Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { AuthService } from './auth';
 
 export interface Transaction {
   id?: string;
@@ -15,31 +19,56 @@ export interface Transaction {
   providedIn: 'root'
 })
 export class TransactionService {
-  private transactions: Transaction[] = [
-    { id: 't1', type: 'income', description: 'Design Project', category: 'Consulting', amount: 1200, date: '2025-05-08' },
-    { id: 't2', type: 'expense', description: 'Office Rent', category: 'Rent/Mortgage', amount: 800, date: '2025-05-05' },
-    { id: 't3', type: 'expense', description: 'Adobe CC', category: 'Software Subscriptions', amount: 55, date: '2025-05-02' },
-    { id: 't4', type: 'income', description: 'Website Update', category: 'Web Design', amount: 500, date: '2025-04-28' }
-  ];
+  private apiUrl = `${environment.apiUrl}/transactions`;
+  private transactionsSubject = new BehaviorSubject<Transaction[]>([]);
+  public transactions$ = this.transactionsSubject.asObservable();
+  public isLoaded = false;
 
-  constructor() {}
+  constructor(private http: HttpClient, private authService: AuthService) {
+    // Clear list when user logs out
+    this.authService.currentUser$.subscribe(user => {
+      if (!user) {
+        this.transactionsSubject.next([]);
+        this.isLoaded = false;
+      }
+    });
+  }
+
+  loadTransactions(): Observable<Transaction[]> {
+    return this.http.get<any>(this.apiUrl).pipe(
+      map(res => res.success ? res.data : []),
+      tap(txs => {
+        this.isLoaded = true;
+        this.transactionsSubject.next(txs);
+      })
+    );
+  }
 
   getTransactions(): Transaction[] {
-    // Return a sorted copy (newest first)
-    return [...this.transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return this.transactionsSubject.value;
+  }
+
+  getTransactionById(id: string): Observable<Transaction> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+      map(res => res.success ? res.data : null)
+    );
   }
 
   saveTransaction(transaction: Transaction): Observable<any> {
-    const newTx = {
-      ...transaction,
-      id: Math.random().toString(36).substr(2, 9)
-    };
-    
-    this.transactions.unshift(newTx); // Add to beginning of array
+    return this.http.post<any>(this.apiUrl, transaction).pipe(
+      tap(() => this.loadTransactions().subscribe())
+    );
+  }
 
-    return of({
-      message: `${transaction.type === 'income' ? 'Income' : 'Expense'} saved successfully`,
-      data: newTx
-    }).pipe(delay(800)); // Delay is fine for the save action
+  updateTransaction(id: string, transaction: Transaction): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, transaction).pipe(
+      tap(() => this.loadTransactions().subscribe())
+    );
+  }
+
+  deleteTransaction(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => this.loadTransactions().subscribe())
+    );
   }
 }
