@@ -1,0 +1,116 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1 class="logo">TaxPal</h1>
+      <p class="subtitle">Create an Account</p>
+      <p style="font-size: 0.875rem; color: var(--text-muted);">Enter your information to create your TaxPal account</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input 
+          type="text" 
+          id="username" 
+          formControlName="username" 
+          placeholder="Choose a username"
+          [ngClass]="{'is-invalid': registerForm.get('username')?.invalid && registerForm.get('username')?.touched}"
+        >
+        <div class="error-text" *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">
+          Username is required
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          formControlName="password" 
+          placeholder="Choose a password"
+          [ngClass]="{'is-invalid': registerForm.get('password')?.invalid && registerForm.get('password')?.touched}"
+        >
+        <div class="error-text" *ngIf="registerForm.get('password')?.errors?.['required'] && registerForm.get('password')?.touched">
+          Password is required
+        </div>
+        <div class="error-text" *ngIf="registerForm.get('password')?.errors?.['minlength'] && registerForm.get('password')?.touched">
+          Password must be at least 6 characters
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input 
+          type="text" 
+          id="fullName" 
+          formControlName="fullName" 
+          placeholder="Enter your full name"
+          [ngClass]="{'is-invalid': registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched}"
+        >
+        <div class="error-text" *ngIf="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched">
+          Full Name is required
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          formControlName="email" 
+          placeholder="Enter your email address"
+          [ngClass]="{'is-invalid': registerForm.get('email')?.invalid && registerForm.get('email')?.touched}"
+        >
+        <div class="error-text" *ngIf="registerForm.get('email')?.errors?.['required'] && registerForm.get('email')?.touched">
+          Email is required
+        </div>
+        <div class="error-text" *ngIf="registerForm.get('email')?.errors?.['email'] && registerForm.get('email')?.touched">
+          Invalid email format
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="country">Country</label>
+        <select 
+          id="country" 
+          formControlName="country"
+          [ngClass]="{'is-invalid': registerForm.get('country')?.invalid && registerForm.get('country')?.touched}"
+        >
+          <option value="" disabled selected>Select your country</option>
+          <option value="US">United States</option>
+          <option value="CA">Canada</option>
+          <option value="UK">United Kingdom</option>
+          <option value="AU">Australia</option>
+          <option value="IN">India</option>
+        </select>
+        <div class="error-text" *ngIf="registerForm.get('country')?.invalid && registerForm.get('country')?.touched">
+          Country is required
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="incomeBracket">Income Bracket (Optional)</label>
+        <select id="incomeBracket" formControlName="incomeBracket">
+          <option value="" disabled selected>Select your income bracket</option>
+          <option value="low">Low (Under {{ currencySymbol }}30,000)</option>
+          <option value="middle">Middle ({{ currencySymbol }}30,000 - {{ currencySymbol }}80,000)</option>
+          <option value="high">High (Over {{ currencySymbol }}80,000)</option>
+        </select>
+      </div>
+
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="isLoading">
+        {{ isLoading ? 'Creating Account...' : 'Create Account' }}
+      </button>
+
+    </form>
+
+    <div class="auth-footer">
+      <p>Already have an account? <a routerLink="/login">Sign in</a></p>
+      <p class="copyright" style="margin-top: 10px;">By creating an account, you agree to our Terms of Service and Privacy Policy.</p>
+    </div>
+  </div>
+</div>

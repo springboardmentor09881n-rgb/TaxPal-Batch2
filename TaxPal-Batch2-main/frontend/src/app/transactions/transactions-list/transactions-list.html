@@ -1,0 +1,59 @@
+<div class="dashboard-header">
+  <div>
+    <h2>All Transactions</h2>
+    <p class="text-muted">View and manage your recent income and expenses.</p>
+  </div>
+  <div class="header-actions">
+    <a routerLink="/income" class="btn-primary" style="margin-right: 0.5rem;">+ Record Income</a>
+    <a routerLink="/expense" class="btn-primary" style="background-color: var(--error-color);">+ Record Expense</a>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+  <div class="filter-tabs">
+    <button class="filter-btn" [class.active]="filter === 'all'" (click)="applyFilter('all')">All</button>
+    <button class="filter-btn" [class.active]="filter === 'income'" (click)="applyFilter('income')">Income</button>
+    <button class="filter-btn" [class.active]="filter === 'expense'" (click)="applyFilter('expense')">Expenses</button>
+  </div>
+
+  <div class="table-container">
+    <table class="table" *ngIf="displayedTransactions.length > 0; else noData">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let tx of displayedTransactions">
+          <td>{{ tx.date | date }}</td>
+          <td>{{ tx.description }}</td>
+          <td>{{ tx.category }}</td>
+          <td>
+            <span class="badge" 
+                  [class.badge-success]="tx.type === 'income'" 
+                  [class.badge-danger]="tx.type === 'expense'">
+              {{ tx.type | titlecase }}
+            </span>
+          </td>
+          <td [class.text-success]="tx.type === 'income'" [class.text-danger]="tx.type === 'expense'">
+            {{ tx.type === 'income' ? '+' : '-' }}{{ currencySymbol }}{{ tx.amount | number:'1.2-2' }}
+          </td>
+          <td>
+            <button [routerLink]="['/edit', tx.id]" style="background: none; border: none; color: var(--primary-color); cursor: pointer; margin-right: 0.5rem; font-weight: 500;">✏️ Edit</button>
+            <button (click)="onDelete(tx.id)" style="background: none; border: none; color: var(--error-color); cursor: pointer; font-weight: 500;">🗑️ Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <ng-template #noData>
+      <div class="no-data" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+        <p>No transactions found for this filter.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

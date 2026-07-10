@@ -1,0 +1,88 @@
+<div class="transaction-container">
+  <div class="transaction-card">
+    
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">{{ formTitle }}</h2>
+        <p class="modal-subtitle">Add details about your {{ transactionType }} to track your finances better.</p>
+      </div>
+      <button class="close-btn" (click)="onCancel()">&times;</button>
+    </div>
+
+    <form [formGroup]="transactionForm" (ngSubmit)="onSubmit()" class="transaction-form">
+      
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label for="description">Description</label>
+          <input 
+            type="text" 
+            id="description" 
+            formControlName="description" 
+            placeholder="e.g. Web Design Project"
+            [ngClass]="{'is-invalid': transactionForm.get('description')?.invalid && transactionForm.get('description')?.touched}"
+          >
+        </div>
+        <div class="form-group flex-1">
+          <label for="amount">Amount</label>
+          <input 
+            type="number" 
+            id="amount" 
+            formControlName="amount" 
+            placeholder="$ 0.00"
+            [ngClass]="{'is-invalid': transactionForm.get('amount')?.invalid && transactionForm.get('amount')?.touched}"
+          >
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label for="category">Category</label>
+          <select 
+            id="category" 
+            formControlName="category"
+            [ngClass]="{'is-invalid': transactionForm.get('category')?.invalid && transactionForm.get('category')?.touched}"
+          >
+            <option value="" disabled selected>Select a category</option>
+            <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+          </select>
+        </div>
+        <div class="form-group flex-1">
+          <label for="date">Date</label>
+          <input 
+            type="date" 
+            id="date" 
+            formControlName="date"
+            [ngClass]="{'is-invalid': transactionForm.get('date')?.invalid && transactionForm.get('date')?.touched}"
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Notes (Optional)</label>
+        <textarea 
+          id="notes" 
+          formControlName="notes" 
+          placeholder="Add any additional details..."
+          rows="3"
+        ></textarea>
+      </div>
+
+      <div class="alert success" *ngIf="successMessage">
+        {{ successMessage }}
+      </div>
+      
+      <div class="alert error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="onCancel()">Cancel</button>
+        <button type="submit" class="btn-primary" [ngClass]="{'btn-danger': transactionType === 'expense'}" [disabled]="isLoading">
+          {{ isLoading ? 'Saving...' : submitLabel }}
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>

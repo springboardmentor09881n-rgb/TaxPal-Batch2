@@ -1,0 +1,136 @@
+<div class="dashboard-header">
+  <div>
+    <h1>Financial Dashboard</h1>
+    <p class="text-muted">Welcome back, {{ userName }}. Here's a summary of your finances.</p>
+  </div>
+  <div class="dashboard-actions">
+    <a routerLink="/income" class="btn-primary">Record Income</a>
+    <a routerLink="/expense" class="btn-primary btn-danger">Record Expense</a>
+  </div>
+</div>
+
+<div *ngIf="isLoading" class="loading-state">
+  <p>Loading dashboard data...</p>
+</div>
+
+<div *ngIf="!isLoading && !summary && loadError" class="card" style="margin: 2rem; padding: 2rem; border-left: 4px solid var(--error-color); background-color: #fef2f2; color: #991b1b; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+  <h3 style="margin-top: 0; color: #991b1b;">⚠️ API Connection Error</h3>
+  <p style="margin-top: 0.5rem; color: #7f1d1d; font-size: 0.95rem;">We encountered an issue loading your financial dashboard data. Please make sure the backend server is running on port 5000 and is connected to MongoDB.</p>
+  <pre style="margin-top: 1rem; padding: 1rem; background-color: #fee2e2; border-radius: 4px; overflow-x: auto; font-size: 0.85rem; border: 1px solid #fca5a5; font-family: monospace;">{{ loadError }}</pre>
+</div>
+
+<div *ngIf="!isLoading && summary">
+  <!-- Summary Cards -->
+  <div class="summary-cards">
+    <div class="card summary-card">
+      <h3>Monthly Income</h3>
+      <div class="amount">{{ currencySymbol }}{{ summary.monthlyIncome | number:'1.2-2' }}</div>
+      <div class="trend" [ngClass]="getTrendClass(summary.incomeTrend)">{{ getTrendText(summary.incomeTrend) }}</div>
+    </div>
+    <div class="card summary-card">
+      <h3>Monthly Expenses</h3>
+      <div class="amount">{{ currencySymbol }}{{ summary.monthlyExpenses | number:'1.2-2' }}</div>
+      <div class="trend" [ngClass]="getTrendClass(summary.expenseTrend, true)">{{ getTrendText(summary.expenseTrend) }}</div>
+    </div>
+    <div class="card summary-card">
+      <h3>Estimated Tax Due</h3>
+      <div class="amount">{{ currencySymbol }}{{ summary.estimatedTaxDue | number:'1.2-2' }}</div>
+      <div class="trend neutral">Based on current brackets</div>
+    </div>
+    <div class="card summary-card">
+      <h3>Savings Rate</h3>
+      <div class="amount">{{ summary.savingsRate }}%</div>
+      <div class="trend" [ngClass]="getTrendClass(summary.savingsTrend)">{{ getTrendText(summary.savingsTrend) }}</div>
+    </div>
+  </div>
+
+  <!-- Charts Area -->
+  <div class="charts-row">
+    <div class="card chart-card flex-2">
+      <h3>Income vs Expenses</h3>
+      <div class="chart-placeholder">
+        <div class="bar-chart">
+          <div class="bar-group" style="flex-direction: column; align-items: center; justify-content: flex-end;" *ngFor="let monthData of monthlyChartData">
+            <div style="display: flex; gap: 0.25rem; align-items: flex-end; height: calc(100% - 20px); width: 100%; justify-content: center;">
+              <div class="bar bar-income" [style.height]="monthData.incomePercent + '%'" [title]="'Income: ' + currencySymbol + monthData.income"></div>
+              <div class="bar bar-expense" [style.height]="monthData.expensePercent + '%'" [title]="'Expense: ' + currencySymbol + monthData.expense"></div>
+            </div>
+            <div class="month-label" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">{{ monthData.month }}</div>
+          </div>
+          <div *ngIf="monthlyChartData.length === 0" style="text-align: center; width: 100%; color: var(--text-muted); font-style: italic; padding-bottom: 2rem;">
+            No monthly transaction history.
+          </div>
+        </div>
+      </div>
+      <div class="chart-legend" style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: center; font-size: 0.9rem; color: var(--text-muted);">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="width: 12px; height: 12px; background-color: var(--primary-color); border-radius: 2px;"></div>
+          <span>Income: <strong style="color: var(--text-dark);">{{ currencySymbol }}{{ summary.monthlyIncome | number:'1.0-0' }}</strong></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="width: 12px; height: 12px; background-color: var(--error-color); border-radius: 2px;"></div>
+          <span>Expenses: <strong style="color: var(--text-dark);">{{ currencySymbol }}{{ summary.monthlyExpenses | number:'1.0-0' }}</strong></span>
+        </div>
+      </div>
+    </div>
+    <div class="card chart-card flex-1">
+      <h3>Expense Breakdown</h3>
+      <div class="chart-placeholder">
+        <div class="pie-chart-placeholder" [style.background]="pieChartBackground"></div>
+      </div>
+      <div class="chart-legend" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted); padding: 0 1rem; max-height: 150px; overflow-y: auto;">
+        <div *ngFor="let item of categoryBreakdown" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div [style.background-color]="item.color" style="width: 12px; height: 12px; border-radius: 50%;"></div>
+            <span>{{ item.category }}</span>
+          </div>
+          <strong style="color: var(--text-dark);">{{ item.percentage }}%</strong>
+        </div>
+        <div *ngIf="categoryBreakdown.length === 0" style="text-align: center; color: var(--text-muted); font-style: italic; width: 100%;">
+          No expense categories recorded.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="card mt-2">
+    <div class="card-header">
+      <h3>Recent Transactions</h3>
+      <a routerLink="/transactions" class="text-primary text-sm">View All</a>
+    </div>
+    <div class="table-responsive" *ngIf="recentTransactions.length > 0; else noRecentTxs">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let tx of recentTransactions">
+            <td>{{ tx.date | date }}</td>
+            <td>{{ tx.description }}</td>
+            <td>{{ tx.category }}</td>
+            <td [ngClass]="tx.type === 'income' ? 'text-success' : 'text-danger'">
+              {{ tx.type === 'income' ? '+' : '-' }}{{ currencySymbol }}{{ tx.amount | number:'1.2-2' }}
+            </td>
+            <td>
+              <span class="badge" [ngClass]="tx.type === 'income' ? 'badge-success' : 'badge-danger'">
+                {{ tx.type | titlecase }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #noRecentTxs>
+      <div style="padding: 3rem 1.5rem; text-align: center; color: var(--text-muted); font-style: italic;">
+        No transactions found.
+      </div>
+    </ng-template>
+  </div>
+</div>

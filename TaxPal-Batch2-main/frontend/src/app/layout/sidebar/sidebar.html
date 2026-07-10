@@ -1,0 +1,32 @@
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <h1 class="logo">TaxPal</h1>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+      <span class="icon">🏠</span> Dashboard
+    </a>
+    <a routerLink="/transactions" routerLinkActive="active" class="nav-item">
+      <span class="icon">🔄</span> Transactions
+    </a>
+    <a routerLink="/budgets" routerLinkActive="active" class="nav-item">
+      <span class="icon">💰</span> Budgets
+    </a>
+    <a routerLink="/tax-estimator" routerLinkActive="active" class="nav-item">
+      <span class="icon">📄</span> Tax Estimator
+    </a>
+    <a routerLink="/reports" routerLinkActive="active" class="nav-item">
+      <span class="icon">📊</span> Reports
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a routerLink="/settings" class="nav-item">
+      <span class="icon">⚙️</span> Settings
+    </a>
+    <a href="#" (click)="onLogout($event)" class="nav-item text-danger">
+      <span class="icon">🚪</span> Logout
+    </a>
+  </div>
+</aside>
