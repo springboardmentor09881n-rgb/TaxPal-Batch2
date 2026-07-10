@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -23,7 +23,8 @@ export class Login {
     private authService: AuthService,
     private transactionService: TransactionService,
     private dashboardService: DashboardService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.loginForm = this.fb.group({
       username: ['', Validators.required],
@@ -44,7 +45,6 @@ export class Login {
       next: (res) => {
         this.isLoading = false;
         
-        // Fetch user's transactions first, then populate dashboard details
         this.transactionService.loadTransactions().subscribe({
           next: () => {
             this.dashboardService.getSummary().subscribe();
@@ -58,7 +58,6 @@ export class Login {
         this.isLoading = false;
         console.error('Login error received:', err);
         
-        // Extract error message safely
         if (err && err.error && err.error.message) {
           this.errorMessage = err.error.message;
         } else if (err && err.message) {
@@ -66,6 +65,9 @@ export class Login {
         } else {
           this.errorMessage = 'Invalid username or password';
         }
+        
+        this.cdr.detectChanges();
+        alert('Login failed: ' + this.errorMessage);
       }
     });
   }
