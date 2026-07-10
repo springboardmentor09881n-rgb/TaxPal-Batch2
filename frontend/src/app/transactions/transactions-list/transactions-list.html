@@ -25,6 +25,7 @@
           <th>Category</th>
           <th>Type</th>
           <th>Amount</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -41,6 +42,10 @@
           </td>
           <td [class.text-success]="tx.type === 'income'" [class.text-danger]="tx.type === 'expense'">
             {{ tx.type === 'income' ? '+' : '-' }}{{ currencySymbol }}{{ tx.amount | number:'1.2-2' }}
+          </td>
+          <td>
+            <button [routerLink]="['/edit', tx.id]" style="background: none; border: none; color: var(--primary-color); cursor: pointer; margin-right: 0.5rem; font-weight: 500;">✏️ Edit</button>
+            <button (click)="onDelete(tx.id)" style="background: none; border: none; color: var(--error-color); cursor: pointer; font-weight: 500;">🗑️ Delete</button>
           </td>
         </tr>
       </tbody>

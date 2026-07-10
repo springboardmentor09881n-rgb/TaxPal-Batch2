@@ -6,6 +6,7 @@ import { Dashboard } from './dashboard/dashboard/dashboard';
 import { TransactionForm } from './transactions/transaction-form/transaction-form';
 import { TransactionsList } from './transactions/transactions-list/transactions-list';
 import { ComingSoon } from './layout/coming-soon/coming-soon';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -14,10 +15,12 @@ export const routes: Routes = [
   {
     path: '',
     component: Layout,
+    canActivate: [authGuard],
     children: [
       { path: 'dashboard', component: Dashboard },
       { path: 'income', component: TransactionForm, data: { type: 'income' } },
       { path: 'expense', component: TransactionForm, data: { type: 'expense' } },
+      { path: 'edit/:id', component: TransactionForm },
       { path: 'transactions', component: TransactionsList },
       { path: 'budgets', component: ComingSoon },
       { path: 'tax-estimator', component: ComingSoon },

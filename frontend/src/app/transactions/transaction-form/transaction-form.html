@@ -78,7 +78,7 @@
       <div class="form-actions">
         <button type="button" class="btn-secondary" (click)="onCancel()">Cancel</button>
         <button type="submit" class="btn-primary" [ngClass]="{'btn-danger': transactionType === 'expense'}" [disabled]="isLoading">
-          {{ isLoading ? 'Saving...' : 'Save' }}
+          {{ isLoading ? 'Saving...' : submitLabel }}
         </button>
       </div>
 

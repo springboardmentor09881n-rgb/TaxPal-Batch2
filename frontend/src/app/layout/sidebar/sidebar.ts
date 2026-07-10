@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../core/services/auth';
 
 @Component({
   selector: 'app-sidebar',
@@ -9,4 +10,11 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   styleUrl: './sidebar.css'
 })
 export class Sidebar {
+  constructor(private authService: AuthService, private router: Router) {}
+
+  onLogout(event: Event) {
+    event.preventDefault();
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
 }

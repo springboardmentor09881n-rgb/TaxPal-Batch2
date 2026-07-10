@@ -17,6 +17,8 @@ export class TransactionForm implements OnInit {
   isLoading = false;
   successMessage = '';
   errorMessage = '';
+  isEditMode = false;
+  transactionId: string | null = null;
 
   incomeCategories = ['Web Design', 'Consulting', 'Salary', 'Investments', 'Other'];
   expenseCategories = ['Rent/Mortgage', 'Business Expenses', 'Utilities', 'Food', 'Software Subscriptions', 'Other'];
@@ -29,17 +31,59 @@ export class TransactionForm implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Determine type from route data
-    this.route.data.subscribe(data => {
-      this.transactionType = data['type'] || 'income';
-    });
-
     this.transactionForm = this.fb.group({
       description: ['', Validators.required],
       amount: [null, [Validators.required, Validators.min(0.01)]],
       category: ['', Validators.required],
       date: ['', Validators.required],
       notes: ['']
+    });
+
+    this.route.params.subscribe(params => {
+      if (params['id']) {
+        this.isEditMode = true;
+        this.transactionId = params['id'];
+        this.loadTransaction(this.transactionId!);
+      } else {
+        this.route.data.subscribe(data => {
+          this.transactionType = data['type'] || 'income';
+        });
+      }
+    });
+  }
+
+  loadTransaction(id: string): void {
+    this.isLoading = true;
+    this.transactionService.getTransactionById(id).subscribe({
+      next: (tx) => {
+        this.isLoading = false;
+        if (tx) {
+          this.transactionType = tx.type;
+          
+          let formattedDate = '';
+          if (tx.date) {
+            const dateObj = new Date(tx.date);
+            if (!isNaN(dateObj.getTime())) {
+              formattedDate = dateObj.toISOString().substring(0, 10);
+            }
+          }
+
+          this.transactionForm.patchValue({
+            description: tx.description,
+            amount: tx.amount,
+            category: tx.category,
+            date: formattedDate,
+            notes: tx.notes || ''
+          });
+        } else {
+          this.errorMessage = 'Transaction not found.';
+        }
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = 'Error loading transaction details.';
+        console.error('Load transaction error', err);
+      }
     });
   }
 
@@ -48,10 +92,16 @@ export class TransactionForm implements OnInit {
   }
 
   get formTitle(): string {
+    if (this.isEditMode) {
+      return this.transactionType === 'income' ? 'Edit Income' : 'Edit Expense';
+    }
     return this.transactionType === 'income' ? 'Record New Income' : 'Record New Expense';
   }
 
   get submitLabel(): string {
+    if (this.isEditMode) {
+      return 'Update';
+    }
     return this.transactionType === 'income' ? 'Save Income' : 'Save Expense';
   }
 
@@ -70,20 +120,23 @@ export class TransactionForm implements OnInit {
       type: this.transactionType
     };
 
-    this.transactionService.saveTransaction(transaction).subscribe({
+    const action$ = this.isEditMode
+      ? this.transactionService.updateTransaction(this.transactionId!, transaction)
+      : this.transactionService.saveTransaction(transaction);
+
+    action$.subscribe({
       next: (res) => {
         this.isLoading = false;
-        this.successMessage = res.message;
+        this.successMessage = this.isEditMode ? 'Transaction updated successfully.' : res.message;
         this.transactionForm.reset();
         
-        // Navigate back to dashboard after short delay to show success message
         setTimeout(() => {
           this.router.navigate(['/dashboard']);
         }, 1000);
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = 'Failed to save transaction.';
+        this.errorMessage = err.error?.message || 'Failed to save transaction.';
       }
     });
   }

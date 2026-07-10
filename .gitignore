@@ -1,0 +1,19 @@
+# Dependency directories
+**/node_modules/
+**/jspm_packages/
+
+# Angular builds and cache
+frontend/dist/
+frontend/.angular/
+
+# Logs
+logs
+*.log
+
+# IDEs and editors
+.idea/
+.vscode/
+.DS_Store
+
+# Environment files
+**/backend/.env

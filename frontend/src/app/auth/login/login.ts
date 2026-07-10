@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth';
+import { TransactionService } from '../../core/services/transaction';
+import { DashboardService } from '../../core/services/dashboard';
 
 @Component({
   selector: 'app-login',
@@ -19,7 +21,10 @@ export class Login {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private transactionService: TransactionService,
+    private dashboardService: DashboardService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.loginForm = this.fb.group({
       username: ['', Validators.required],
@@ -39,14 +44,30 @@ export class Login {
     this.authService.login(this.loginForm.value).subscribe({
       next: (res) => {
         this.isLoading = false;
-        // In real app, store token and redirect to dashboard
-        console.log('Login successful', res);
+        
+        this.transactionService.loadTransactions().subscribe({
+          next: () => {
+            this.dashboardService.getSummary().subscribe();
+            this.dashboardService.getRecentTransactions().subscribe();
+          }
+        });
+
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = 'Invalid username or password';
-        console.error('Login error', err);
+        console.error('Login error received:', err);
+        
+        if (err && err.error && err.error.message) {
+          this.errorMessage = err.error.message;
+        } else if (err && err.message) {
+          this.errorMessage = err.message;
+        } else {
+          this.errorMessage = 'Invalid username or password';
+        }
+        
+        this.cdr.detectChanges();
+        alert('Login failed: ' + this.errorMessage);
       }
     });
   }
