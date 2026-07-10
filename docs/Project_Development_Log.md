@@ -289,7 +289,70 @@
 - Coordinated API requirements with the backend team.
 
 ---
+---
 
+# 📅 8 July 2026
+
+## Backend Testing
+
+### Team Lead
+
+**Sachin Shekhar**
+
+### Completed
+
+- Performed end-to-end backend API testing.
+- Reviewed the implemented backend modules before frontend integration.
+- Identified field mismatches between the frontend and backend APIs.
+- Reported the identified issues to the backend team for resolution.
+
+### Backend Team
+
+**Members**
+- Varshistha Gopalam
+- Rehan Shaik
+
+### Completed
+
+- Fixed the API field mismatches identified during testing.
+- Updated the Authentication, Transaction, and Dashboard modules.
+- Tested the backend after implementing the fixes.
+- Pushed the updated backend implementation to their respective Git branches.
+
+### Outcome
+
+- Backend APIs were aligned with the frontend requirements.
+- Backend was prepared for complete frontend integration.
+
+---
+
+# 📅 9 July 2026
+
+## Frontend–Backend Integration
+
+### Team Lead
+
+**Sachin Shekhar**
+
+### Completed
+
+- Reviewed the updated backend implementation after the fixes.
+- Successfully integrated the Angular frontend with the Express.js backend.
+- Connected the Authentication, Dashboard, and Transaction modules with the backend APIs.
+- Replaced all remaining mock data with live backend API responses.
+- Performed end-to-end frontend-backend integration testing.
+- Identified and fixed login and signup error handling for invalid credentials.
+- Resolved frontend-backend response handling issues.
+- Pushed the integrated implementation and fixes to the **Team-Lead-Sachin-Shekhar** branch.
+
+### Outcome
+
+- Frontend and backend integration completed successfully.
+- End-to-end application flow verified successfully.
+- Milestone 1 implementation completed.
+- Project prepared for demonstration and review.
+
+---
 ## 🤝 Team Activities
 
 ### Completed
@@ -300,44 +363,6 @@
 
 ---
 
-# 📊 Current Project Status
-
-## ✅ Completed
-
-- Project planning and requirement analysis
-- GitHub repository setup
-- Git workflow and branch management
-- Frontend project setup
-- Backend project setup
-- MongoDB Atlas configuration
-- Database models implementation
-- Backend folder structure
-- Frontend UI implementation
-- Dashboard refinement
-- Authentication APIs (Register & Login)
-- Project documentation and README updates
-
----
-
-## 🔄 In Progress
-
-- Backend end-to-end testing
-- Transaction API implementation
-- Frontend and Backend integration
-- Complete application testing
-
----
-
-## ⏳ Upcoming
-
-- Complete Transaction APIs
-- Integrate frontend with backend services
-- Perform end-to-end testing
-- Fix identified bugs
-- Complete Milestone 1
-- Prepare project demonstration
-
----
 
 # 🔀 Git Workflow
 
