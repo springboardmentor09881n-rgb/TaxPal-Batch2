@@ -1,7 +1,8 @@
 # TaxPal-Batch2
+
 # TaxPal
 
-TaxPal is a full-stack web application designed to help freelancers and self-employed individuals manage their finances efficiently. The application enables users to track income and expenses, manage transactions, estimate taxes, and generate financial reports.
+TaxPal is a full-stack web application designed to help freelancers and self-employed individuals manage their finances efficiently. The application enables users to track income and expenses, manage transactions, estimate taxes, and generate financial insights through an interactive dashboard.
 
 ---
 
@@ -25,7 +26,7 @@ TaxPal is a full-stack web application designed to help freelancers and self-emp
 
 # 📁 Project Structure
 
-```
+```text
 TaxPal-Batch2
 │
 ├── frontend/
@@ -39,6 +40,7 @@ TaxPal-Batch2
 │   │   ├── routes/
 │   │   ├── services/
 │   │   ├── utils/
+│   │   ├── validators/
 │   │   ├── app.js
 │   │   └── server.js
 │   │
@@ -54,46 +56,53 @@ TaxPal-Batch2
 
 # 📌 Milestone 1 Features
 
-- User Registration & Login
-- Income Management
-- Expense Management
-- Dashboard
-- MongoDB Integration
+- ✅ User Registration
+- ✅ User Login with JWT Authentication
+- ✅ Protected Routes
+- ✅ Income Management
+- ✅ Expense Management
+- ✅ Transaction Management (CRUD)
+- ✅ Financial Dashboard
+- ✅ Recent Transactions
+- ✅ MongoDB Atlas Integration
+- ✅ RESTful Backend APIs
+- ✅ Frontend-Backend Integration
+- ✅ Authentication & Authorization
+- ✅ Responsive User Interface
 
 ---
 
 # 📊 Current Project Status
 
-## ✅ Completed
+## ✅ Milestone 1 Completed
+
+The following modules have been successfully completed and integrated:
+
 - Repository setup
 - Frontend project setup
 - Backend project setup
 - MongoDB Atlas configuration
-- Database models implemented
-- Authentication APIs (Register & Login)
+- Database models implementation
+- Authentication APIs (Register, Login & Current User)
+- JWT Authentication
+- Protected API routes
+- Transaction APIs (Create, Read, Update & Delete)
+- Dashboard API
 - Frontend UI implementation
-- Backend folder structure
-- Git workflow established
-
-## 🔄 In Progress
-- End-to-end backend testing
-- Transaction API implementation and testing
 - Frontend and Backend integration
-- Module integration testing
-
-## ⏳ Upcoming
-- Complete frontend-backend integration
+- API integration testing
 - End-to-end application testing
-- Bug fixing and optimization
-- Milestone 1 review and completion
+- Bug fixes and optimization
+- Project documentation
+- Git workflow implementation
 
 ---
 
 # 🔀 Git Workflow
 
-- `main` contains the latest stable code.
+- `main` contains the latest stable implementation.
 - Every team member works on their own branch.
-- Changes are pushed only to individual branches.
+- Changes are pushed to individual branches.
 - Pull Requests are reviewed before merging into `main`.
 
 ---
@@ -110,16 +119,55 @@ TaxPal-Batch2
 
 ---
 
-# 🎯 Team Objective
+# 🎯 Milestone 1 Deliverables
 
-Deliver a fully functional Milestone 1 application with:
-- Secure user authentication
-- Income and expense management
-- RESTful backend APIs
-- MongoDB Atlas integration
-- Responsive Angular frontend
-- Successful frontend-backend integration
-- Stable and thoroughly tested implementation
+- Secure JWT-based Authentication
+- User Registration & Login
+- Income Management
+- Expense Management
+- Transaction Management
+- Interactive Financial Dashboard
+- RESTful Backend APIs
+- MongoDB Atlas Integration
+- Angular Frontend
+- Complete Frontend-Backend Integration
+- End-to-End Testing
+- Stable and Functional Application
 
+---
 
+# 🛠 Future Enhancements (Milestone 2)
 
+- Tax Estimation Module
+- Budget Planning
+- Financial Reports
+- Data Visualization & Analytics
+- Export Reports (PDF/Excel)
+- Notifications & Reminders
+- Advanced Dashboard Insights
+
+---
+
+# 👨‍💻 Team
+
+**Project:** TaxPal – Personal Finance & Tax Estimator
+
+**Frontend Team**
+- Sachin Shekhar (Team Lead)
+- Debjani Roy
+- Jalal Jasmine
+
+**Backend Team**
+- Varshistha Gopalam
+- Rehan Shaik
+
+**Database Team**
+- Jainee Jain
+
+---
+
+# 📌 Status
+
+**Milestone 1 Successfully Completed ✅**
+
+The application has been fully integrated, tested, and is ready for demonstration and review.
