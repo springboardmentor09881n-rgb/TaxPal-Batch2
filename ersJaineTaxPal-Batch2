@@ -1,0 +1,20 @@
+[33mca8afc9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mJainee-Jain-Database[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/Jainee-Jain-Database[m[33m, [m[1;31morigin/Jainee-Jain[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{0}: Branch: renamed refs/heads/Jainee-Jain to refs/heads/Jainee-Jain-Database
+[33mca8afc9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mJainee-Jain-Database[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/Jainee-Jain-Database[m[33m, [m[1;31morigin/Jainee-Jain[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{2}: merge main: Fast-forward
+[33m8aa862d[m[33m ([m[1;31morigin/Jainee-Jain(Database)[m[33m)[m HEAD@{3}: checkout: moving from main to Jainee-Jain
+[33mca8afc9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mJainee-Jain-Database[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/Jainee-Jain-Database[m[33m, [m[1;31morigin/Jainee-Jain[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{4}: pull origin main: Fast-forward
+[33mdcb8598[m HEAD@{5}: checkout: moving from Jainee-Jain to main
+[33m8aa862d[m[33m ([m[1;31morigin/Jainee-Jain(Database)[m[33m)[m HEAD@{6}: commit: Setup MongoDB Atlas connection and added database models (User, Transaction, Budget, TaxEstimate)
+[33mdcb8598[m HEAD@{7}: checkout: moving from Jainee-Jain to Jainee-Jain
+[33mdcb8598[m HEAD@{8}: checkout: moving from Jainee-Jain to Jainee-Jain
+[33mdcb8598[m HEAD@{9}: checkout: moving from main to Jainee-Jain
+[33mdcb8598[m HEAD@{10}: checkout: moving from Jainee-Jain to main
+[33mdcb8598[m HEAD@{11}: merge main: Fast-forward
+[33ma80c0d6[m HEAD@{12}: checkout: moving from main to Jainee-Jain
+[33mdcb8598[m HEAD@{13}: pull origin main: Fast-forward
+[33ma80c0d6[m HEAD@{14}: checkout: moving from Jainee-Jain to main
+[33ma80c0d6[m HEAD@{15}: checkout: moving from main to Jainee-Jain
+[33ma80c0d6[m HEAD@{16}: checkout: moving from Jainee-Jain to main
+[33ma80c0d6[m HEAD@{17}: checkout: moving from main to Jainee-Jain
+[33ma80c0d6[m HEAD@{18}: checkout: moving from Jainee-Jain to main
+[33ma80c0d6[m HEAD@{19}: checkout: moving from main to Jainee-Jain
+[33ma80c0d6[m HEAD@{20}: clone: from https://github.com/springboardmentor09881n-rgb/TaxPal-Batch2.git
