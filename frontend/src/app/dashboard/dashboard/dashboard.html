@@ -73,21 +73,101 @@
         </div>
       </div>
     </div>
-    <div class="card chart-card flex-1">
-      <h3>Expense Breakdown</h3>
+
+  </div>
+
+  <!-- Budget Tracking & Progress Section -->
+  <div class="budget-section-header">
+    <h2>Budget Tracking & Progress</h2>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-cards" style="margin-bottom: 1.5rem;">
+    <div class="card summary-card">
+      <h3>Monthly Budget Limit</h3>
+      <div class="amount">{{ currencySymbol }}{{ totalBudget | number:'1.2-2' }}</div>
+      <div class="trend neutral">Cap limits set for this month</div>
+    </div>
+    <div class="card summary-card">
+      <h3>Remaining Budget</h3>
+      <div class="amount" [ngClass]="{'text-danger': remainingBudget < 0, 'text-success': remainingBudget >= 0 && totalBudget > 0}">
+        {{ remainingBudget < 0 ? '-' : '' }}{{ currencySymbol }}{{ Math.abs(remainingBudget) | number:'1.2-2' }}
+      </div>
+      <div class="trend" [ngClass]="{'negative': remainingBudget < 0, 'positive': remainingBudget >= 0}">
+        {{ remainingBudget < 0 ? 'Budget Exceeded' : 'Under budget limit' }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Overall Budget Progress Meter -->
+  <div class="overall-progress-bar-widget" *ngIf="totalBudget > 0">
+    <div class="progress-header-row">
+      <span>Overall Budget Progress</span>
+      <strong>{{ currencySymbol }}{{ spentBudget | number:'1.0-0' }} / {{ currencySymbol }}{{ totalBudget | number:'1.0-0' }} ({{ overallBudgetProgressPercent | number:'1.1-1' }}%)</strong>
+    </div>
+    <div class="budget-progress-bar-container">
+      <div 
+        class="budget-progress-bar-fill" 
+        [style.width]="Math.min(overallBudgetProgressPercent, 100) + '%'"
+        [ngClass]="{'bg-success': overallBudgetProgressPercent < 70, 'bg-warning': overallBudgetProgressPercent >= 70 && overallBudgetProgressPercent <= 90, 'bg-danger': overallBudgetProgressPercent > 90}"
+      ></div>
+    </div>
+    <div class="alert-budget-banner" *ngIf="overallBudgetProgressPercent > 100">
+      ⚠️ Overspending detected! You have exceeded your overall monthly budget limit by {{ currencySymbol }}{{ Math.abs(remainingBudget) | number:'1.2-2' }}.
+    </div>
+  </div>
+
+  <!-- Budget Charts Row -->
+  <div class="charts-row" style="margin-bottom: 2rem;" *ngIf="totalBudget > 0">
+    <div class="card chart-card flex-2">
+      <h3>Budget Usage (Limit vs Spent)</h3>
       <div class="chart-placeholder">
-        <div class="pie-chart-placeholder" [style.background]="pieChartBackground"></div>
+        <div class="bar-chart-container">
+          <div class="category-bar-group" *ngFor="let progress of budgetProgressList">
+            <div class="bars-wrapper">
+              <div 
+                class="bar-limit" 
+                [style.height]="'100%'" 
+                [title]="'Limit: ' + currencySymbol + progress.limit"
+              ></div>
+              <div 
+                class="bar-spent" 
+                [style.height]="Math.min((progress.spent / progress.limit) * 100, 100) + '%'" 
+                [ngClass]="{'bg-success': progress.status === 'Green', 'bg-warning': progress.status === 'Orange', 'bg-danger': progress.status === 'Red'}"
+                [title]="'Spent: ' + currencySymbol + progress.spent + ' (' + (progress.percentage | number:'1.0-0') + '%)'"
+              ></div>
+            </div>
+            <div class="category-label" [title]="progress.budget.category">{{ progress.budget.category }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-legend" style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: center; font-size: 0.9rem; color: var(--text-muted);">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="width: 12px; height: 12px; background-color: var(--border-color); border-radius: 2px;"></div>
+          <span>Budget Limit</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div style="width: 12px; height: 12px; background-color: var(--primary-color); border-radius: 2px;"></div>
+          <span>Spent</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card chart-card flex-1">
+      <h3>Expense Distribution</h3>
+      <div class="chart-placeholder">
+        <div class="pie-chart-placeholder-budget" [style.background]="budgetPieChartBackground"></div>
       </div>
       <div class="chart-legend" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted); padding: 0 1rem; max-height: 150px; overflow-y: auto;">
-        <div *ngFor="let item of categoryBreakdown" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+        <div *ngFor="let item of activeBudgets; let i = index" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div [style.background-color]="item.color" style="width: 12px; height: 12px; border-radius: 50%;"></div>
-            <span>{{ item.category }}</span>
+            <div [style.background-color]="getBudgetCategoryColor(i)" class="budget-legend-color"></div>
+            <span>{{ item.budget.category }}</span>
           </div>
-          <strong style="color: var(--text-dark);">{{ item.percentage }}%</strong>
+          <strong style="color: var(--text-dark);">{{ currencySymbol }}{{ item.spent | number:'1.0-0' }}</strong>
         </div>
-        <div *ngIf="categoryBreakdown.length === 0" style="text-align: center; color: var(--text-muted); font-style: italic; width: 100%;">
-          No expense categories recorded.
+        <div *ngIf="activeBudgets.length === 0" style="text-align: center; color: var(--text-muted); font-style: italic; width: 100%;">
+          No spent budgets to distribute.
         </div>
       </div>
     </div>

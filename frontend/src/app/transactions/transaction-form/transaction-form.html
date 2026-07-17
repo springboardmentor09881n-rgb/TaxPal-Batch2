@@ -37,14 +37,35 @@
       <div class="form-row">
         <div class="form-group flex-1">
           <label for="category">Category</label>
-          <select 
-            id="category" 
-            formControlName="category"
-            [ngClass]="{'is-invalid': transactionForm.get('category')?.invalid && transactionForm.get('category')?.touched}"
-          >
-            <option value="" disabled selected>Select a category</option>
-            <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
-          </select>
+          <div class="autocomplete-container">
+            <input 
+              type="text" 
+              id="category" 
+              formControlName="category" 
+              placeholder="Search or type category..."
+              (focus)="showSuggestions = true"
+              (blur)="hideSuggestionsWithDelay()"
+              (input)="onCategoryInput($event)"
+              [ngClass]="{'is-invalid': transactionForm.get('category')?.invalid && transactionForm.get('category')?.touched}"
+              autocomplete="off"
+            >
+            <div class="suggestions-dropdown" *ngIf="showSuggestions && (filteredCategories.length > 0 || canAddCustomCategory)">
+              <div 
+                *ngFor="let cat of filteredCategories" 
+                class="suggestion-item" 
+                (mousedown)="selectCategory(cat)"
+              >
+                {{ cat }}
+              </div>
+              <div 
+                *ngIf="canAddCustomCategory" 
+                class="suggestion-item add-custom-item" 
+                (mousedown)="addCustomCategoryAndSelect()"
+              >
+                <span class="plus-icon">+</span> Add "{{ categoryInputVal }}" as custom
+              </div>
+            </div>
+          </div>
         </div>
         <div class="form-group flex-1">
           <label for="date">Date</label>
