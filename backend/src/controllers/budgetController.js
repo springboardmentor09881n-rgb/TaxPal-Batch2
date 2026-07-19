@@ -3,7 +3,9 @@ const budgetService = require("../services/budgetService");
 const createBudget = async (req, res, next) => {
   try {
     const budgetData = {
-      ...req.body,
+      category: req.body.category,
+      limit: req.body.limit,
+      month: req.body.month,
       userId: req.user.id,
     };
     const budget = await budgetService.createBudget(budgetData);
@@ -45,7 +47,12 @@ const getBudgetById = async (req, res, next) => {
 
 const updateBudget = async (req, res, next) => {
   try {
-    const budget = await budgetService.updateBudget(req.params.id, req.user.id, req.body);
+    const updateData = {};
+    if (req.body.category !== undefined) updateData.category = req.body.category;
+    if (req.body.limit !== undefined) updateData.limit = req.body.limit;
+    if (req.body.month !== undefined) updateData.month = req.body.month;
+
+    const budget = await budgetService.updateBudget(req.params.id, req.user.id, updateData);
     res.status(200).json({
       success: true,
       message: "Budget updated successfully.",
