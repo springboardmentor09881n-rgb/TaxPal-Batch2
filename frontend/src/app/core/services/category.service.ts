@@ -6,6 +6,10 @@ export interface CustomCategories {
   expense: string[];
 }
 
+export interface CategoryColors {
+  [name: string]: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -22,8 +26,39 @@ export class CategoryService {
   private customCategoriesSubject = new BehaviorSubject<CustomCategories>({ income: [], expense: [] });
   public customCategories$ = this.customCategoriesSubject.asObservable();
 
+  /** Default palette – one color per default category in order */
+  private readonly palette = [
+    '#3b82f6','#10b981','#f97316','#8b5cf6','#ef4444',
+    '#06b6d4','#14b8a6','#ec4899','#6b7280','#84cc16',
+    '#a855f7','#22d3ee','#f43f5e','#fb923c','#eab308'
+  ];
+
+  /** Reusable category color mapping matching requirement specification */
+  private defaultCategoryColors: { [key: string]: string } = {
+    'Rent': '#3b82f6',          // Blue
+    'Shopping': '#10b981',      // Green
+    'Healthcare': '#eab308',    // Yellow
+    'Utilities': '#f97316',     // Orange
+    'Food': '#8b5cf6',           // Purple
+    'Transport': '#ef4444',      // Red
+    'Education': '#06b6d4',      // Cyan
+    'Entertainment': '#14b8a6',  // Teal
+    'Travel': '#ec4899',         // Pink
+    'Other': '#6b7280',          // Gray
+    'Salary': '#22c55e',
+    'Freelancing': '#6366f1',
+    'Business': '#2563eb',
+    'Investments': '#a855f7',
+    'Bonus': '#f59e0b',
+    'Refund': '#0891b2'
+  };
+
+  private colorsSubject = new BehaviorSubject<CategoryColors>({});
+  public categoryColors$ = this.colorsSubject.asObservable();
+
   constructor() {
     this.loadCustomCategories();
+    this.loadColors();
   }
 
   private loadCustomCategories(): void {
@@ -47,6 +82,49 @@ export class CategoryService {
   private saveCustomCategories(categories: CustomCategories): void {
     localStorage.setItem('taxpal_custom_categories', JSON.stringify(categories));
     this.customCategoriesSubject.next(categories);
+  }
+
+  // ── Color helpers ──────────────────────────────────────────────────────────
+
+  private loadColors(): void {
+    const stored = localStorage.getItem('taxpal_category_colors');
+    if (stored) {
+      try { this.colorsSubject.next(JSON.parse(stored)); return; } catch {}
+    }
+    // Seed defaults on first load
+    const colors: CategoryColors = { ...this.defaultCategoryColors };
+    [...this.defaultExpenseCategories, ...this.defaultIncomeCategories]
+      .forEach((cat, i) => { 
+        if (!colors[cat]) {
+          colors[cat] = this.palette[i % this.palette.length];
+        }
+      });
+    this.persistColors(colors);
+  }
+
+  private persistColors(colors: CategoryColors): void {
+    localStorage.setItem('taxpal_category_colors', JSON.stringify(colors));
+    this.colorsSubject.next(colors);
+  }
+
+  getCategoryColor(name: string): string {
+    const stored = this.colorsSubject.value[name];
+    if (stored) return stored;
+
+    if (this.defaultCategoryColors[name]) {
+      return this.defaultCategoryColors[name];
+    }
+    
+    // Fallback: deterministic from index
+    const all = [...this.defaultExpenseCategories, ...this.defaultIncomeCategories,
+                  ...this.customCategoriesSubject.value.income,
+                  ...this.customCategoriesSubject.value.expense];
+    const idx = all.indexOf(name);
+    return this.palette[(idx >= 0 ? idx : name.length) % this.palette.length];
+  }
+
+  setCategoryColor(name: string, color: string): void {
+    this.persistColors({ ...this.colorsSubject.value, [name]: color });
   }
 
   getExpenseCategories(): string[] {
@@ -89,6 +167,14 @@ export class CategoryService {
     };
     
     this.saveCustomCategories(updated);
+
+    // Automatically assign next available color
+    const currentColors = this.colorsSubject.value;
+    if (!currentColors[formattedName]) {
+      const assignedColor = this.getCategoryColor(formattedName);
+      this.setCategoryColor(formattedName, assignedColor);
+    }
+
     return true;
   }
 

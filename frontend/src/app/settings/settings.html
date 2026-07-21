@@ -122,6 +122,7 @@
             <h4 class="sub-section-title">Standard Categories</h4>
             <div class="categories-grid">
               <div *ngFor="let cat of systemCategories" class="category-pill system-pill">
+                <span class="cat-color-dot" [style.background-color]="getCategoryColor(cat)"></span>
                 <span>{{ cat }}</span>
                 <span class="badge-system">System</span>
               </div>
@@ -133,8 +134,10 @@
             <h4 class="sub-section-title">Custom Categories</h4>
             <div class="categories-grid" *ngIf="customCategories.length > 0; else noCustom">
               <div *ngFor="let cat of customCategories" class="category-pill custom-pill">
+                <span class="cat-color-dot" [style.background-color]="getCategoryColor(cat)"></span>
                 <span>{{ cat }}</span>
                 <div class="pill-actions">
+                  <input type="color" class="pill-color-picker" [value]="getCategoryColor(cat)" (change)="savePillColor(cat, $event)" title="Change color">
                   <button class="pill-btn edit-pill-btn" (click)="openEditModal(cat)" title="Edit category">✏️</button>
                   <button class="pill-btn delete-pill-btn" (click)="deleteCategory(cat)" title="Delete category">❌</button>
                 </div>
@@ -252,6 +255,14 @@
           (keyup.enter)="addCategory()"
         >
       </div>
+      <div class="form-group">
+        <label for="new-cat-color">Category Color</label>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <input type="color" id="new-cat-color" [(ngModel)]="newCategoryColor" name="newCategoryColor" style="width:44px;height:34px;padding:2px;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;">
+          <span style="display:inline-block;width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,0.15);" [style.background-color]="newCategoryColor"></span>
+          <span style="font-size:0.82rem;color:var(--text-muted);font-family:monospace;">{{ newCategoryColor }}</span>
+        </div>
+      </div>
       <div class="alert error" *ngIf="categoryError">
         {{ categoryError }}
       </div>
@@ -281,6 +292,14 @@
           placeholder="e.g. Health & Fitness"
           (keyup.enter)="updateCategory()"
         >
+      </div>
+      <div class="form-group">
+        <label for="edit-cat-color">Category Color</label>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <input type="color" id="edit-cat-color" [(ngModel)]="editCategoryColor" name="editCategoryColor" style="width:44px;height:34px;padding:2px;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;">
+          <span style="display:inline-block;width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,0.15);" [style.background-color]="editCategoryColor"></span>
+          <span style="font-size:0.82rem;color:var(--text-muted);font-family:monospace;">{{ editCategoryColor }}</span>
+        </div>
       </div>
       <div class="alert error" *ngIf="editCategoryError">
         {{ editCategoryError }}

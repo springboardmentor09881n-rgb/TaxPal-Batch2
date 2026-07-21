@@ -171,7 +171,7 @@ export class BudgetService {
               const txMonth = tx.date.substring(0, 7);
               return txMonth === month;
             })
-            .reduce((sum, tx) => sum + tx.amount, 0);
+            .reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
 
           const limit = budget.limit;
           const remaining = limit - spent;

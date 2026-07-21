@@ -6,6 +6,13 @@ import { DashboardService, DashboardSummary, ChartItem } from '../../core/servic
 import { Transaction, TransactionService } from '../../core/services/transaction';
 import { AuthService } from '../../core/services/auth';
 import { BudgetService, BudgetProgress } from '../../core/services/budget.service';
+import { CategoryService } from '../../core/services/category.service';
+
+export interface ExpenseCategoryDistribution {
+  category: string;
+  spent: number;
+  percentage: number;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -35,10 +42,70 @@ export class Dashboard implements OnInit {
     private authService: AuthService,
     private budgetService: BudgetService,
     private transactionService: TransactionService,
+    private categoryService: CategoryService,
     private sanitizer: DomSanitizer
   ) {}
 
   get monthlyChartData(): ChartItem[] {
+    const transactions = this.transactionService.getTransactions() || [];
+    
+    if (transactions.length > 0) {
+      const monthMap = new Map<string, { year: number; month: number; income: number; expense: number }>();
+
+      transactions.forEach(tx => {
+        if (!tx.date) return;
+        const d = new Date(tx.date);
+        if (isNaN(d.getTime())) return;
+        
+        const year = d.getFullYear();
+        const month = d.getMonth(); // 0 - 11
+        const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+        if (!monthMap.has(key)) {
+          monthMap.set(key, { year, month, income: 0, expense: 0 });
+        }
+
+        const entry = monthMap.get(key)!;
+        const val = Math.abs(tx.amount || 0);
+        if (tx.type === 'income') {
+          entry.income += val;
+        } else if (tx.type === 'expense') {
+          entry.expense += val;
+        }
+      });
+
+      if (monthMap.size > 0) {
+        // Sort keys chronologically
+        const sortedKeys = Array.from(monthMap.keys()).sort();
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        
+        const years = new Set(Array.from(monthMap.values()).map(v => v.year));
+        const multiYear = years.size > 1;
+
+        let maxVal = 0;
+        monthMap.forEach(v => {
+          if (v.income > maxVal) maxVal = v.income;
+          if (v.expense > maxVal) maxVal = v.expense;
+        });
+        if (maxVal === 0) maxVal = 1;
+
+        return sortedKeys.map(key => {
+          const item = monthMap.get(key)!;
+          const monthLabel = multiYear 
+            ? `${monthNames[item.month]} '${String(item.year).slice(2)}`
+            : monthNames[item.month];
+
+          return {
+            month: monthLabel,
+            income: item.income,
+            expense: item.expense,
+            incomePercent: Math.min((item.income / maxVal) * 100, 100),
+            expensePercent: Math.min((item.expense / maxVal) * 100, 100)
+          };
+        });
+      }
+    }
+
     return (this.summary && this.summary.chartData) ? this.summary.chartData : [];
   }
 
@@ -141,34 +208,76 @@ export class Dashboard implements OnInit {
     return this.budgetProgressList.filter(item => item.spent > 0);
   }
 
+  get activeExpenseCategories(): ExpenseCategoryDistribution[] {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    // 1. Get expense transactions for current month
+    const transactions = this.transactionService.getTransactions() || [];
+    const monthlyExpenses = transactions.filter(tx => 
+      tx.type === 'expense' && Math.abs(tx.amount || 0) > 0 && tx.date && tx.date.substring(0, 7) === currentMonth
+    );
+
+    const categoryMap = new Map<string, number>();
+
+    if (monthlyExpenses.length > 0) {
+      monthlyExpenses.forEach(tx => {
+        const cat = tx.category || 'Other';
+        const current = categoryMap.get(cat) || 0;
+        categoryMap.set(cat, current + Math.abs(tx.amount || 0));
+      });
+    } else if (this.summary && this.summary.categoryBreakdown && this.summary.categoryBreakdown.length > 0) {
+      this.summary.categoryBreakdown.forEach(item => {
+        const val = Math.abs(item.amount || 0);
+        if (val > 0) {
+          categoryMap.set(item.category, val);
+        }
+      });
+    } else if (this.budgetProgressList && this.budgetProgressList.length > 0) {
+      this.budgetProgressList.forEach(item => {
+        if (item.spent > 0) {
+          categoryMap.set(item.budget.category, item.spent);
+        }
+      });
+    }
+
+    const total = Array.from(categoryMap.values()).reduce((sum, val) => sum + val, 0);
+    if (total === 0) {
+      return [];
+    }
+
+    const result: ExpenseCategoryDistribution[] = [];
+    categoryMap.forEach((spent, category) => {
+      const percentage = (spent / total) * 100;
+      result.push({ category, spent, percentage });
+    });
+
+    return result.sort((a, b) => b.spent - a.spent);
+  }
+
+  getCategoryColor(categoryName: string): string {
+    return this.categoryService.getCategoryColor(categoryName);
+  }
+
   get budgetPieChartBackground(): SafeStyle {
-    if (this.budgetProgressList.length === 0 || this.spentBudget === 0) {
+    const categories = this.activeExpenseCategories;
+    if (categories.length === 0) {
       return this.sanitizer.bypassSecurityTrustStyle('#e5e7eb');
     }
     
     let gradientParts: string[] = [];
     let accumulatedPercentage = 0;
-    const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6b7280'];
     
-    const sorted = [...this.budgetProgressList]
-      .filter(item => item.spent > 0)
-      .sort((a, b) => b.spent - a.spent);
-      
-    if (sorted.length === 0) {
-      return this.sanitizer.bypassSecurityTrustStyle('#e5e7eb');
-    }
-    
-    sorted.forEach((item, idx) => {
-      const percentage = (item.spent / this.spentBudget) * 100;
-      if (percentage > 0) {
-        const nextPercentage = accumulatedPercentage + percentage;
-        const color = colors[idx % colors.length];
+    categories.forEach((item) => {
+      if (item.percentage > 0) {
+        const nextPercentage = accumulatedPercentage + item.percentage;
+        const color = this.getCategoryColor(item.category);
         gradientParts.push(`${color} ${accumulatedPercentage.toFixed(1)}% ${nextPercentage.toFixed(1)}%`);
         accumulatedPercentage = nextPercentage;
       }
     });
     
-    if (accumulatedPercentage > 0 && accumulatedPercentage < 100 && sorted.length > 0) {
+    if (accumulatedPercentage > 0 && accumulatedPercentage < 100 && categories.length > 0) {
       gradientParts[gradientParts.length - 1] = gradientParts[gradientParts.length - 1].replace(/[\d\.]+%$/, '100%');
     }
     
@@ -177,7 +286,24 @@ export class Dashboard implements OnInit {
   }
 
   getBudgetCategoryColor(idx: number): string {
-    const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6b7280'];
-    return colors[idx % colors.length];
+    // Kept for backward compatibility if needed
+    const categories = this.activeExpenseCategories;
+    if (categories[idx]) {
+      return this.getCategoryColor(categories[idx].category);
+    }
+    return '#4f46e5';
+  }
+
+  getExpenseDistributionTooltip(): string {
+    const categories = this.activeExpenseCategories;
+    if (categories.length === 0) {
+      return 'No expense data available';
+    }
+    return categories
+      .map(item => {
+        const formattedPct = item.percentage % 1 === 0 ? item.percentage.toFixed(0) : item.percentage.toFixed(1);
+        return `${item.category} – ${formattedPct}%`;
+      })
+      .join('\n');
   }
 }

@@ -74,6 +74,25 @@
       </div>
     </div>
 
+    <!-- Expense Distribution Pie Chart Card -->
+    <div class="card chart-card flex-1">
+      <h3>Expense Distribution</h3>
+      <div class="chart-placeholder">
+        <div class="pie-chart-placeholder-budget" [style.background]="budgetPieChartBackground" [title]="getExpenseDistributionTooltip()"></div>
+      </div>
+      <div class="chart-legend" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted); padding: 0 1rem; max-height: 150px; overflow-y: auto;">
+        <div *ngFor="let item of activeExpenseCategories; let i = index" style="display: flex; align-items: center; justify-content: space-between; width: 100%;" [title]="item.category + ' – ' + (item.percentage | number:'1.0-1') + '%'">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div [style.background-color]="getCategoryColor(item.category)" class="budget-legend-color"></div>
+            <span>{{ item.category }}</span>
+          </div>
+          <strong style="color: var(--text-dark);">{{ item.percentage | number:'1.0-1' }}%</strong>
+        </div>
+        <div *ngIf="activeExpenseCategories.length === 0" style="text-align: center; color: var(--text-muted); font-style: italic; width: 100%;">
+          No expense data available.
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Budget Tracking & Progress Section -->
@@ -117,9 +136,9 @@
     </div>
   </div>
 
-  <!-- Budget Charts Row -->
+  <!-- Budget Usage Chart Row -->
   <div class="charts-row" style="margin-bottom: 2rem;" *ngIf="totalBudget > 0">
-    <div class="card chart-card flex-2">
+    <div class="card chart-card" style="width: 100%;">
       <h3>Budget Usage (Limit vs Spent)</h3>
       <div class="chart-placeholder">
         <div class="bar-chart-container">
@@ -133,7 +152,7 @@
               <div 
                 class="bar-spent" 
                 [style.height]="Math.min((progress.spent / progress.limit) * 100, 100) + '%'" 
-                [ngClass]="{'bg-success': progress.status === 'Green', 'bg-warning': progress.status === 'Orange', 'bg-danger': progress.status === 'Red'}"
+                [style.background-color]="getCategoryColor(progress.budget.category)"
                 [title]="'Spent: ' + currencySymbol + progress.spent + ' (' + (progress.percentage | number:'1.0-0') + '%)'"
               ></div>
             </div>
@@ -149,25 +168,6 @@
         <div style="display: flex; align-items: center; gap: 0.5rem;">
           <div style="width: 12px; height: 12px; background-color: var(--primary-color); border-radius: 2px;"></div>
           <span>Spent</span>
-        </div>
-      </div>
-    </div>
-    
-    <div class="card chart-card flex-1">
-      <h3>Expense Distribution</h3>
-      <div class="chart-placeholder">
-        <div class="pie-chart-placeholder-budget" [style.background]="budgetPieChartBackground"></div>
-      </div>
-      <div class="chart-legend" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted); padding: 0 1rem; max-height: 150px; overflow-y: auto;">
-        <div *ngFor="let item of activeBudgets; let i = index" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div [style.background-color]="getBudgetCategoryColor(i)" class="budget-legend-color"></div>
-            <span>{{ item.budget.category }}</span>
-          </div>
-          <strong style="color: var(--text-dark);">{{ currencySymbol }}{{ item.spent | number:'1.0-0' }}</strong>
-        </div>
-        <div *ngIf="activeBudgets.length === 0" style="text-align: center; color: var(--text-muted); font-style: italic; width: 100%;">
-          No spent budgets to distribute.
         </div>
       </div>
     </div>

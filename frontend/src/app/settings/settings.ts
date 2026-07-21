@@ -28,6 +28,11 @@ export class SettingsComponent implements OnInit {
   editCategoryName = '';
   editCategoryError = '';
 
+  // Color state
+  newCategoryColor = '#4f46e5';
+  editCategoryColor = '#4f46e5';
+  categoryColors: { [name: string]: string } = {};
+
   // Profile mock variables
   userProfile = {
     name: 'Alex Morgan',
@@ -74,6 +79,11 @@ export class SettingsComponent implements OnInit {
     this.categoryService.customCategories$.subscribe(() => {
       this.loadCategories();
     });
+
+    // Keep local color map in sync with service
+    this.categoryService.categoryColors$.subscribe(colors => {
+      this.categoryColors = { ...colors };
+    });
   }
 
   loadCategories(): void {
@@ -95,6 +105,7 @@ export class SettingsComponent implements OnInit {
 
   openAddModal(): void {
     this.newCategoryName = '';
+    this.newCategoryColor = '#4f46e5';
     this.categoryError = '';
     this.showAddModal = true;
   }
@@ -113,6 +124,9 @@ export class SettingsComponent implements OnInit {
 
     const success = this.categoryService.addCustomCategory(this.categoryTab, name);
     if (success) {
+      // Save the chosen color for this new category
+      const formatted = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      this.categoryService.setCategoryColor(formatted, this.newCategoryColor);
       this.closeAddModal();
     } else {
       this.categoryError = 'Category already exists.';
@@ -122,6 +136,7 @@ export class SettingsComponent implements OnInit {
   openEditModal(name: string): void {
     this.oldCategoryName = name;
     this.editCategoryName = name;
+    this.editCategoryColor = this.getCategoryColor(name);
     this.editCategoryError = '';
     this.showEditModal = true;
   }
@@ -140,6 +155,9 @@ export class SettingsComponent implements OnInit {
 
     const success = this.categoryService.editCustomCategory(this.categoryTab, this.oldCategoryName, newName);
     if (success) {
+      // Save color under the new name
+      const formatted = newName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      this.categoryService.setCategoryColor(formatted, this.editCategoryColor);
       this.closeEditModal();
     } else {
       this.editCategoryError = 'Invalid name or category already exists.';
@@ -150,6 +168,17 @@ export class SettingsComponent implements OnInit {
     if (confirm(`Are you sure you want to delete the category "${name}"?`)) {
       this.categoryService.deleteCustomCategory(this.categoryTab, name);
     }
+  }
+
+  /** Returns the saved color for a category (with a fallback). */
+  getCategoryColor(name: string): string {
+    return this.categoryColors[name] || this.categoryService.getCategoryColor(name);
+  }
+
+  /** Save a new color immediately when user picks one on the pill. */
+  savePillColor(name: string, event: Event): void {
+    const color = (event.target as HTMLInputElement).value;
+    this.categoryService.setCategoryColor(name, color);
   }
 
   // Profile forms
