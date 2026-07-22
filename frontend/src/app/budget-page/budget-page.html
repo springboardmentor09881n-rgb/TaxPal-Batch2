@@ -1,0 +1,239 @@
+<div class="budget-container">
+  
+  <!-- Header Row -->
+  <div class="budget-header-row">
+    <div>
+      <h1>Budgets & Spending</h1>
+      <p class="text-muted">Set monthly spending limits for each category to keep your finances in check.</p>
+    </div>
+    <div class="header-actions">
+      <div class="month-selector">
+        <label for="month-picker">Month: </label>
+        <input 
+          type="month" 
+          id="month-picker" 
+          [(ngModel)]="selectedMonth" 
+          (change)="onMonthChange()"
+          class="month-input"
+        >
+      </div>
+      <button class="btn-primary" (click)="openAddModal()">Set New Budget</button>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="budget-summary-grid">
+    <div class="card summary-card">
+      <h3>Monthly Budget Limit</h3>
+      <div class="amount">{{ currencySymbol }}{{ totalLimit | number:'1.2-2' }}</div>
+      <div class="trend neutral">Target cap for selected month</div>
+    </div>
+    
+    <div class="card summary-card">
+      <h3>Total Spent</h3>
+      <div class="amount">{{ currencySymbol }}{{ totalSpent | number:'1.2-2' }}</div>
+      <div class="trend" [ngClass]="{'negative': overallPercentage > 90, 'warning': overallPercentage >= 70 && overallPercentage <= 90, 'positive': overallPercentage < 70 && totalLimit > 0}">
+        {{ overallPercentage | number:'1.0-0' }}% of budget spent
+      </div>
+    </div>
+
+    <div class="card summary-card">
+      <h3>Remaining Budget</h3>
+      <div class="amount" [ngClass]="{'text-danger': totalRemaining < 0, 'text-success': totalRemaining >= 0 && totalLimit > 0}">
+        {{ totalRemaining < 0 ? '-' : '' }}{{ currencySymbol }}{{ Math.abs(totalRemaining) | number:'1.2-2' }}
+      </div>
+      <div class="trend" [ngClass]="{'negative': totalRemaining < 0, 'positive': totalRemaining >= 0}">
+        {{ totalRemaining < 0 ? 'Overspending detected' : 'Available to spend' }}
+      </div>
+    </div>
+
+    <div class="card summary-card">
+      <h3>Budget Health</h3>
+      <div class="amount status-value" [ngClass]="{'status-green': budgetHealthStatus === 'Good', 'status-orange': budgetHealthStatus === 'Warning', 'status-red': budgetHealthStatus === 'Exceeded'}">
+        {{ budgetHealthStatus === 'Exceeded' ? 'Critical' : budgetHealthStatus }}
+      </div>
+      <div class="trend neutral">Based on overall consumption</div>
+    </div>
+  </div>
+
+  <!-- Overall Progress Bar -->
+  <div class="card overall-progress-card" *ngIf="totalLimit > 0">
+    <div class="progress-details">
+      <span>Overall Spending Progress</span>
+      <strong>{{ currencySymbol }}{{ totalSpent | number:'1.0-0' }} / {{ currencySymbol }}{{ totalLimit | number:'1.0-0' }} ({{ overallPercentage | number:'1.1-1' }}%)</strong>
+    </div>
+    <div class="progress-bar-container">
+      <div 
+        class="progress-bar-fill" 
+        [style.width]="Math.min(overallPercentage, 100) + '%'"
+        [ngClass]="{'bg-success': overallPercentage < 70, 'bg-warning': overallPercentage >= 70 && overallPercentage <= 90, 'bg-danger': overallPercentage > 90}"
+      ></div>
+    </div>
+    <div class="exceeded-warning-banner" *ngIf="overallPercentage > 100">
+      ⚠️ Budget Exceeded: You have overspent by {{ currencySymbol }}{{ Math.abs(totalRemaining) | number:'1.2-2' }}!
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <p>Loading budget limits and tracking expenses...</p>
+  </div>
+
+  <!-- Budgets List Table -->
+  <div class="card budget-table-card mt-2" *ngIf="!isLoading">
+    <div class="card-header">
+      <h3>Budgets Overview ({{ selectedMonth | date:'MMMM yyyy' }})</h3>
+    </div>
+    <div class="table-responsive" *ngIf="budgetProgressList.length > 0; else noBudgets">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Budget Limit</th>
+            <th>Spent</th>
+            <th>Remaining</th>
+            <th>Progress & Status</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of budgetProgressList">
+            <td style="font-weight: 600; color: var(--text-dark);">{{ item.budget.category }}</td>
+            <td>{{ currencySymbol }}{{ item.limit | number:'1.2-2' }}</td>
+            <td>{{ currencySymbol }}{{ item.spent | number:'1.2-2' }}</td>
+            <td [ngClass]="{'text-danger': item.remaining < 0, 'text-success': item.remaining >= 0}">
+              {{ item.remaining < 0 ? '-' : '' }}{{ currencySymbol }}{{ Math.abs(item.remaining) | number:'1.2-2' }}
+            </td>
+            <td>
+              <div class="cell-progress-wrapper">
+                <div class="progress-info-row">
+                  <span class="badge" [ngClass]="{'badge-success': item.status === 'Green', 'badge-warning': item.status === 'Orange', 'badge-danger': item.status === 'Red'}">
+                    {{ item.isExceeded ? 'Budget Exceeded' : (item.percentage | number:'1.0-0') + '%' }}
+                  </span>
+                </div>
+                <div class="progress-bar-container mini">
+                  <div 
+                    class="progress-bar-fill" 
+                    [style.width]="Math.min(item.percentage, 100) + '%'"
+                    [ngClass]="{'bg-success': item.status === 'Green', 'bg-warning': item.status === 'Orange', 'bg-danger': item.status === 'Red'}"
+                  ></div>
+                </div>
+              </div>
+            </td>
+            <td style="text-align: right;">
+              <div class="action-buttons-group">
+                <button class="btn-icon-action" (click)="openEditModal(item)" title="Edit Budget">✏️</button>
+                <button class="btn-icon-action text-danger" (click)="deleteBudget(item.budget.id, item.budget.category)" title="Delete Budget">❌</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <ng-template #noBudgets>
+      <div class="empty-state-wrapper">
+        <div class="empty-icon">📊</div>
+        <h4>No budgets configured</h4>
+        <p class="text-muted">You haven't set any budgets for {{ selectedMonth | date:'MMMM yyyy' }}. Click "Set New Budget" to get started.</p>
+        <button class="btn-primary mt-1" style="width: auto;" (click)="openAddModal()">Set New Budget</button>
+      </div>
+    </ng-template>
+  </div>
+
+</div>
+
+<!-- Budget Form Modal -->
+<div class="modal-backdrop" *ngIf="showFormModal">
+  <div class="budget-modal">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">{{ isEditMode ? 'Edit Budget' : 'Create New Budget' }}</h3>
+        <p class="modal-subtitle">Set dynamic monthly target cap for a category.</p>
+      </div>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+    
+    <form [formGroup]="budgetForm" (ngSubmit)="saveBudget()" class="budget-form">
+      <div class="modal-body">
+        
+        <!-- Category input field with autocomplete suggestions -->
+        <div class="form-group" style="position: relative;">
+          <label for="category">Category</label>
+          <div class="autocomplete-container">
+            <input 
+              type="text" 
+              id="category" 
+              formControlName="category" 
+              placeholder="Select a category..."
+              (focus)="showSuggestions = true"
+              (blur)="hideSuggestionsWithDelay()"
+              (input)="onCategoryInput($event)"
+              [ngClass]="{'is-invalid': budgetForm.get('category')?.invalid && budgetForm.get('category')?.touched}"
+              autocomplete="off"
+            >
+            <div class="suggestions-dropdown" *ngIf="showSuggestions && (filteredCategories.length > 0 || canAddCustomCategory)">
+              <div 
+                *ngFor="let cat of filteredCategories" 
+                class="suggestion-item" 
+                (mousedown)="selectCategory(cat)"
+              >
+                {{ cat }}
+              </div>
+              <div 
+                *ngIf="canAddCustomCategory" 
+                class="suggestion-item add-custom-item" 
+                (mousedown)="addCustomCategoryAndSelect()"
+              >
+                <span class="plus-icon">+</span> Add "{{ categoryInputVal }}" as custom category
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="limit">Budget Amount</label>
+            <input 
+              type="number" 
+              id="limit" 
+              formControlName="limit" 
+              placeholder="$ 0.00"
+              [ngClass]="{'is-invalid': budgetForm.get('limit')?.invalid && budgetForm.get('limit')?.touched}"
+            >
+          </div>
+          <div class="form-group flex-1">
+            <label for="month">Month</label>
+            <input 
+              type="month" 
+              id="month" 
+              formControlName="month"
+              [ngClass]="{'is-invalid': budgetForm.get('month')?.invalid && budgetForm.get('month')?.touched}"
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description (Optional)</label>
+          <textarea 
+            id="description" 
+            formControlName="description" 
+            placeholder="Add any additional details..."
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="alert error" *ngIf="formError">
+          {{ formError }}
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="budgetForm.invalid">
+          {{ isEditMode ? 'Update Budget' : 'Create Budget' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

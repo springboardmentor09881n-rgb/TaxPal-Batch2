@@ -1,0 +1,313 @@
+<div class="settings-container">
+  <div class="settings-header">
+    <h1>Settings</h1>
+    <p class="text-muted">Manage your account settings and preferences.</p>
+  </div>
+
+  <div class="settings-layout">
+    <!-- Settings Sidebar -->
+    <aside class="settings-sidebar-nav">
+      <button 
+        [class.active]="activeTab === 'profile'" 
+        (click)="activeTab = 'profile'"
+        class="sidebar-tab-btn"
+      >
+        <span class="tab-icon">👤</span> Profile
+      </button>
+      <button 
+        [class.active]="activeTab === 'categories'" 
+        (click)="activeTab = 'categories'"
+        class="sidebar-tab-btn"
+      >
+        <span class="tab-icon">🏷️</span> Categories
+      </button>
+      <button 
+        [class.active]="activeTab === 'notifications'" 
+        (click)="activeTab = 'notifications'"
+        class="sidebar-tab-btn"
+      >
+        <span class="tab-icon">🔔</span> Notifications
+      </button>
+      <button 
+        [class.active]="activeTab === 'security'" 
+        (click)="activeTab = 'security'"
+        class="sidebar-tab-btn"
+      >
+        <span class="tab-icon">🔒</span> Security
+      </button>
+    </aside>
+
+    <!-- Settings Content Area -->
+    <main class="settings-content">
+      
+      <!-- Profile Tab -->
+      <div class="settings-card" *ngIf="activeTab === 'profile'">
+        <h3>Profile Settings</h3>
+        <p class="section-subtitle">Update your personal information and preferences.</p>
+        
+        <form (ngSubmit)="saveProfile()" class="settings-form">
+          <div class="form-group">
+            <label for="prof-name">Full Name</label>
+            <input type="text" id="prof-name" [(ngModel)]="userProfile.name" name="name" placeholder="e.g. Alex Morgan">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="prof-email">Email Address</label>
+              <input type="email" id="prof-email" [(ngModel)]="userProfile.email" name="email" readonly style="background-color: var(--bg-main); cursor: not-allowed;">
+            </div>
+            <div class="form-group flex-1">
+              <label for="prof-phone">Phone Number</label>
+              <input type="text" id="prof-phone" [(ngModel)]="userProfile.phone" name="phone">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="prof-currency">Currency Preference</label>
+              <select id="prof-currency" [(ngModel)]="userProfile.currency" name="currency">
+                <option value="USD">USD ($)</option>
+                <option value="INR">INR (₹)</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label for="prof-lang">Language</label>
+              <select id="prof-lang" [(ngModel)]="userProfile.language" name="language">
+                <option value="English">English</option>
+                <option value="Spanish">Spanish</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="alert success" *ngIf="profileSuccess">
+            {{ profileSuccess }}
+          </div>
+
+          <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 2rem;">Save Profile</button>
+        </form>
+      </div>
+
+      <!-- Category Management Tab -->
+      <div class="settings-card" *ngIf="activeTab === 'categories'">
+        <div class="card-title-row">
+          <div>
+            <h3>Category Management</h3>
+            <p class="section-subtitle">Configure categories for your transactions and budgets.</p>
+          </div>
+          <button class="btn-primary btn-sm-add" (click)="openAddModal()">
+            <span class="plus-icon">+</span> Add New Category
+          </button>
+        </div>
+
+        <div class="category-tabs">
+          <button 
+            [class.active]="categoryTab === 'expense'" 
+            (click)="setCategoryTab('expense')"
+            class="cat-tab-btn"
+          >
+            Expense Categories
+          </button>
+          <button 
+            [class.active]="categoryTab === 'income'" 
+            (click)="setCategoryTab('income')"
+            class="cat-tab-btn"
+          >
+            Income Categories
+          </button>
+        </div>
+
+        <div class="categories-list-container">
+          <!-- Default Categories -->
+          <div class="categories-section">
+            <h4 class="sub-section-title">Standard Categories</h4>
+            <div class="categories-grid">
+              <div *ngFor="let cat of systemCategories" class="category-pill system-pill">
+                <span class="cat-color-dot" [style.background-color]="getCategoryColor(cat)"></span>
+                <span>{{ cat }}</span>
+                <span class="badge-system">System</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Custom Categories -->
+          <div class="categories-section mt-2">
+            <h4 class="sub-section-title">Custom Categories</h4>
+            <div class="categories-grid" *ngIf="customCategories.length > 0; else noCustom">
+              <div *ngFor="let cat of customCategories" class="category-pill custom-pill">
+                <span class="cat-color-dot" [style.background-color]="getCategoryColor(cat)"></span>
+                <span>{{ cat }}</span>
+                <div class="pill-actions">
+                  <input type="color" class="pill-color-picker" [value]="getCategoryColor(cat)" (change)="savePillColor(cat, $event)" title="Change color">
+                  <button class="pill-btn edit-pill-btn" (click)="openEditModal(cat)" title="Edit category">✏️</button>
+                  <button class="pill-btn delete-pill-btn" (click)="deleteCategory(cat)" title="Delete category">❌</button>
+                </div>
+              </div>
+            </div>
+            <ng-template #noCustom>
+              <p class="empty-text">No custom categories added yet. Click "+ Add New Category" to create one.</p>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications Tab -->
+      <div class="settings-card" *ngIf="activeTab === 'notifications'">
+        <h3>Notification Preferences</h3>
+        <p class="section-subtitle">Manage how and when you receive notifications.</p>
+
+        <form (ngSubmit)="saveNotifications()" class="settings-form">
+          <div class="toggle-group">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <label>Email Alerts</label>
+                <p class="text-muted">Receive reports and transaction summaries via email.</p>
+              </div>
+              <input type="checkbox" [(ngModel)]="notifications.emailAlerts" name="emailAlerts" class="toggle-checkbox">
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <label>Weekly Summary Digest</label>
+                <p class="text-muted">Receive a weekly overview of income and savings progress.</p>
+              </div>
+              <input type="checkbox" [(ngModel)]="notifications.weeklyDigest" name="weeklyDigest" class="toggle-checkbox">
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <label>Budget Limit Warnings</label>
+                <p class="text-muted">Notify me when category spending exceeds 70% or 90% of the limit.</p>
+              </div>
+              <input type="checkbox" [(ngModel)]="notifications.budgetAlerts" name="budgetAlerts" class="toggle-checkbox">
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <label>Tax Filing Deadlines</label>
+                <p class="text-muted">Get notifications for quarterly and annual tax estimation dates.</p>
+              </div>
+              <input type="checkbox" [(ngModel)]="notifications.taxDeadlines" name="taxDeadlines" class="toggle-checkbox">
+            </div>
+          </div>
+
+          <div class="alert success" *ngIf="notifSuccess">
+            {{ notifSuccess }}
+          </div>
+
+          <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 2rem;">Save Preferences</button>
+        </form>
+      </div>
+
+      <!-- Security Tab -->
+      <div class="settings-card" *ngIf="activeTab === 'security'">
+        <h3>Security Settings</h3>
+        <p class="section-subtitle">Update your password and manage security preferences.</p>
+
+        <form (ngSubmit)="changePassword()" class="settings-form">
+          <div class="form-group">
+            <label for="sec-curr">Current Password</label>
+            <input type="password" id="sec-curr" [(ngModel)]="passwordData.current" name="current" placeholder="••••••••">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="sec-new">New Password</label>
+              <input type="password" id="sec-new" [(ngModel)]="passwordData.new" name="new" placeholder="••••••••">
+            </div>
+            <div class="form-group flex-1">
+              <label for="sec-conf">Confirm New Password</label>
+              <input type="password" id="sec-conf" [(ngModel)]="passwordData.confirm" name="confirm" placeholder="••••••••">
+            </div>
+          </div>
+
+          <div class="alert error" *ngIf="securityError">
+            {{ securityError }}
+          </div>
+          
+          <div class="alert success" *ngIf="securitySuccess">
+            {{ securitySuccess }}
+          </div>
+
+          <button type="submit" class="btn-primary" style="width: auto; padding: 0.75rem 2rem;">Change Password</button>
+        </form>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal-backdrop" *ngIf="showAddModal">
+  <div class="settings-modal">
+    <div class="modal-header">
+      <h3>Add Custom Category</h3>
+      <button class="close-btn" (click)="closeAddModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-description">Create a new category for your {{ categoryTab }} transactions.</p>
+      <div class="form-group">
+        <label for="new-cat-name">Category Name</label>
+        <input 
+          type="text" 
+          id="new-cat-name" 
+          [(ngModel)]="newCategoryName" 
+          placeholder="e.g. Health & Fitness"
+          (keyup.enter)="addCategory()"
+        >
+      </div>
+      <div class="form-group">
+        <label for="new-cat-color">Category Color</label>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <input type="color" id="new-cat-color" [(ngModel)]="newCategoryColor" name="newCategoryColor" style="width:44px;height:34px;padding:2px;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;">
+          <span style="display:inline-block;width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,0.15);" [style.background-color]="newCategoryColor"></span>
+          <span style="font-size:0.82rem;color:var(--text-muted);font-family:monospace;">{{ newCategoryColor }}</span>
+        </div>
+      </div>
+      <div class="alert error" *ngIf="categoryError">
+        {{ categoryError }}
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeAddModal()">Cancel</button>
+      <button class="btn-primary" (click)="addCategory()">Add Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal-backdrop" *ngIf="showEditModal">
+  <div class="settings-modal">
+    <div class="modal-header">
+      <h3>Edit Custom Category</h3>
+      <button class="close-btn" (click)="closeEditModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-description">Rename your custom category. This updates it everywhere.</p>
+      <div class="form-group">
+        <label for="edit-cat-name">Category Name</label>
+        <input 
+          type="text" 
+          id="edit-cat-name" 
+          [(ngModel)]="editCategoryName" 
+          placeholder="e.g. Health & Fitness"
+          (keyup.enter)="updateCategory()"
+        >
+      </div>
+      <div class="form-group">
+        <label for="edit-cat-color">Category Color</label>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <input type="color" id="edit-cat-color" [(ngModel)]="editCategoryColor" name="editCategoryColor" style="width:44px;height:34px;padding:2px;border:1px solid var(--border-color);border-radius:6px;cursor:pointer;">
+          <span style="display:inline-block;width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,0.15);" [style.background-color]="editCategoryColor"></span>
+          <span style="font-size:0.82rem;color:var(--text-muted);font-family:monospace;">{{ editCategoryColor }}</span>
+        </div>
+      </div>
+      <div class="alert error" *ngIf="editCategoryError">
+        {{ editCategoryError }}
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeEditModal()">Cancel</button>
+      <button class="btn-primary" (click)="updateCategory()">Update Category</button>
+    </div>
+  </div>
+</div>

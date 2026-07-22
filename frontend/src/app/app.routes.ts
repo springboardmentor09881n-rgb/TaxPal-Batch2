@@ -6,6 +6,8 @@ import { Dashboard } from './dashboard/dashboard/dashboard';
 import { TransactionForm } from './transactions/transaction-form/transaction-form';
 import { TransactionsList } from './transactions/transactions-list/transactions-list';
 import { ComingSoon } from './layout/coming-soon/coming-soon';
+import { BudgetPage } from './budget-page/budget-page';
+import { SettingsComponent } from './settings/settings';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -22,10 +24,10 @@ export const routes: Routes = [
       { path: 'expense', component: TransactionForm, data: { type: 'expense' } },
       { path: 'edit/:id', component: TransactionForm },
       { path: 'transactions', component: TransactionsList },
-      { path: 'budgets', component: ComingSoon },
+      { path: 'budgets', component: BudgetPage },
       { path: 'tax-estimator', component: ComingSoon },
       { path: 'reports', component: ComingSoon },
-      { path: 'settings', component: ComingSoon },
+      { path: 'settings', component: SettingsComponent },
     ]
   },
   { path: '**', redirectTo: '/login' }

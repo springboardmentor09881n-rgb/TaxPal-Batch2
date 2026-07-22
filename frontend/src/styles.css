@@ -615,13 +615,6 @@ a:hover {
 .bar-income { background-color: var(--primary-color); }
 .bar-expense { background-color: var(--error-color); }
 
-.pie-chart-placeholder {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  margin: auto;
-  transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-}
 
 /* Tables */
 .table-responsive {
