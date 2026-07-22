@@ -180,7 +180,6 @@
               <div 
                 class="bar-spent" 
                 [style.height]="Math.min((progress.spent / (progress.limit || 1)) * 100, 100) + '%'" 
-                [style.background-color]="getCategoryColor(progress.budget.category)"
                 [title]="'Spent: ' + currencySymbol + (progress.spent | number:'1.2-2') + ' (' + (progress.percentage | number:'1.0-0') + '%)'"
               ></div>
             </div>
