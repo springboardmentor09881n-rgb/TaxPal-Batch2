@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface CustomCategories {
   income: string[];
@@ -14,6 +16,7 @@ export interface CategoryColors {
   providedIn: 'root'
 })
 export class CategoryService {
+  private apiUrl = `${environment.apiUrl}/categories`;
   private defaultExpenseCategories = [
     'Food', 'Transport', 'Rent', 'Utilities', 'Shopping', 
     'Healthcare', 'Education', 'Entertainment', 'Travel', 'Other'
@@ -56,9 +59,39 @@ export class CategoryService {
   private colorsSubject = new BehaviorSubject<CategoryColors>({});
   public categoryColors$ = this.colorsSubject.asObservable();
 
-  constructor() {
+  constructor(private http: HttpClient) {
     this.loadCustomCategories();
     this.loadColors();
+    this.syncBackendCategories();
+  }
+
+  private syncBackendCategories(): void {
+    this.http.get<any>(this.apiUrl).subscribe({
+      next: (res) => {
+        if (res && res.success && Array.isArray(res.data)) {
+          const incomeBackend: string[] = [];
+          const expenseBackend: string[] = [];
+          res.data.forEach((item: any) => {
+            if (item.name) {
+              if (item.type === 'income') {
+                incomeBackend.push(item.name);
+              } else {
+                expenseBackend.push(item.name);
+              }
+              if (item.color) {
+                this.setCategoryColor(item.name, item.color);
+              }
+            }
+          });
+
+          const current = this.customCategoriesSubject.value;
+          const mergedIncome = Array.from(new Set([...current.income, ...incomeBackend]));
+          const mergedExpense = Array.from(new Set([...current.expense, ...expenseBackend]));
+          this.saveCustomCategories({ income: mergedIncome, expense: mergedExpense });
+        }
+      },
+      error: () => {}
+    });
   }
 
   private loadCustomCategories(): void {
@@ -170,10 +203,17 @@ export class CategoryService {
 
     // Automatically assign next available color
     const currentColors = this.colorsSubject.value;
-    if (!currentColors[formattedName]) {
-      const assignedColor = this.getCategoryColor(formattedName);
-      this.setCategoryColor(formattedName, assignedColor);
-    }
+    const assignedColor = currentColors[formattedName] || this.getCategoryColor(formattedName);
+    this.setCategoryColor(formattedName, assignedColor);
+
+    // Post to backend API
+    this.http.post<any>(this.apiUrl, {
+      name: formattedName,
+      type,
+      color: assignedColor
+    }).subscribe({
+      error: () => {}
+    });
 
     return true;
   }

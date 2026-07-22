@@ -1,18 +1,20 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
-import { TransactionService, Transaction } from './transaction';
+import { map, tap, catchError } from 'rxjs/operators';
+import { TransactionService } from './transaction';
 import { AuthService } from './auth';
+import { environment } from '../../../environments/environment';
 
 export interface Budget {
   id: string;
-  userId: string;
+  userId?: string;
   category: string;
   limit: number;
   month: string; // Format: "YYYY-MM"
   description?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface BudgetProgress {
@@ -29,128 +31,98 @@ export interface BudgetProgress {
   providedIn: 'root'
 })
 export class BudgetService {
+  private apiUrl = `${environment.apiUrl}/budgets`;
   private budgetsSubject = new BehaviorSubject<Budget[]>([]);
   public budgets$ = this.budgetsSubject.asObservable();
 
   constructor(
+    private http: HttpClient,
     private transactionService: TransactionService,
     private authService: AuthService
   ) {
     this.authService.currentUser$.subscribe(user => {
       if (user) {
-        this.loadBudgets();
+        this.loadBudgets().subscribe();
       } else {
         this.budgetsSubject.next([]);
       }
     });
   }
 
-  private loadBudgets(): void {
-    const user = this.authService.currentUser;
-    if (!user) return;
-
-    const stored = localStorage.getItem(`taxpal_budgets_${user.id || 'default'}`);
-    if (stored) {
-      try {
-        this.budgetsSubject.next(JSON.parse(stored));
-      } catch (e) {
-        console.error('Error loading budgets', e);
-        this.budgetsSubject.next([]);
-      }
-    } else {
-      this.budgetsSubject.next([]);
-    }
-  }
-
-  private saveBudgets(budgets: Budget[]): void {
-    const user = this.authService.currentUser;
-    if (!user) return;
-
-    localStorage.setItem(`taxpal_budgets_${user.id || 'default'}`, JSON.stringify(budgets));
-    this.budgetsSubject.next(budgets);
+  loadBudgets(): Observable<Budget[]> {
+    return this.http.get<any>(this.apiUrl).pipe(
+      map(res => {
+        if (res && res.success && Array.isArray(res.data)) {
+          return res.data.map((item: any) => ({
+            id: item.id || item._id,
+            category: item.category,
+            limit: item.limit,
+            month: item.month,
+            description: item.description || ''
+          }));
+        }
+        return [];
+      }),
+      tap(budgets => {
+        this.budgetsSubject.next(budgets);
+      }),
+      catchError(err => {
+        console.error('Error loading budgets from API:', err);
+        return of(this.budgetsSubject.value);
+      })
+    );
   }
 
   getBudgets(): Observable<Budget[]> {
+    if (this.budgetsSubject.value.length === 0) {
+      this.loadBudgets().subscribe();
+    }
     return this.budgets$;
   }
 
   createBudget(budgetData: Omit<Budget, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Observable<Budget> {
-    const user = this.authService.currentUser;
-    if (!user) throw new Error('User not authenticated');
-
-    const currentBudgets = this.budgetsSubject.value;
-
-    // Check for duplicate category and month
-    const duplicate = currentBudgets.find(
-      b => b.category.toLowerCase() === budgetData.category.toLowerCase() && 
-           b.month === budgetData.month
+    return this.http.post<any>(this.apiUrl, budgetData).pipe(
+      map(res => {
+        const item = res.data;
+        return {
+          id: item.id || item._id,
+          category: item.category,
+          limit: item.limit,
+          month: item.month,
+          description: item.description || budgetData.description || ''
+        } as Budget;
+      }),
+      tap(() => {
+        this.loadBudgets().subscribe();
+      })
     );
-    if (duplicate) {
-      throw new Error(`A budget for category "${budgetData.category}" and month "${budgetData.month}" already exists.`);
-    }
-
-    if (budgetData.limit <= 0) {
-      throw new Error('Budget limit must be greater than 0.');
-    }
-
-    const now = new Date().toISOString();
-    const newBudget: Budget = {
-      ...budgetData,
-      id: Math.random().toString(36).substring(2, 9),
-      userId: user.id || 'default',
-      createdAt: now,
-      updatedAt: now
-    };
-
-    const updated = [...currentBudgets, newBudget];
-    this.saveBudgets(updated);
-    return of(newBudget);
   }
 
   updateBudget(id: string, budgetData: Partial<Omit<Budget, 'id' | 'userId'>>): Observable<Budget> {
-    const currentBudgets = this.budgetsSubject.value;
-    const index = currentBudgets.findIndex(b => b.id === id);
-    if (index === -1) {
-      throw new Error('Budget not found');
-    }
-
-    const existingBudget = currentBudgets[index];
-
-    // Check for duplicates if category or month is changing
-    if (budgetData.category || budgetData.month) {
-      const newCategory = budgetData.category || existingBudget.category;
-      const newMonth = budgetData.month || existingBudget.month;
-      const duplicate = currentBudgets.find(
-        b => b.id !== id && 
-             b.category.toLowerCase() === newCategory.toLowerCase() && 
-             b.month === newMonth
-      );
-      if (duplicate) {
-        throw new Error(`A budget for category "${newCategory}" and month "${newMonth}" already exists.`);
-      }
-    }
-
-    if (budgetData.limit !== undefined && budgetData.limit <= 0) {
-      throw new Error('Budget limit must be greater than 0.');
-    }
-
-    const updatedBudget: Budget = {
-      ...existingBudget,
-      ...budgetData,
-      updatedAt: new Date().toISOString()
-    } as Budget;
-
-    const updated = [...currentBudgets];
-    updated[index] = updatedBudget;
-    this.saveBudgets(updated);
-    return of(updatedBudget);
+    return this.http.put<any>(`${this.apiUrl}/${id}`, budgetData).pipe(
+      map(res => {
+        const item = res.data;
+        return {
+          id: item.id || item._id,
+          category: item.category,
+          limit: item.limit,
+          month: item.month,
+          description: item.description || budgetData.description || ''
+        } as Budget;
+      }),
+      tap(() => {
+        this.loadBudgets().subscribe();
+      })
+    );
   }
 
   deleteBudget(id: string): Observable<boolean> {
-    const currentBudgets = this.budgetsSubject.value;
-    const updated = currentBudgets.filter(b => b.id !== id);
-    this.saveBudgets(updated);
-    return of(true);
+    return this.http.delete<any>(`${this.apiUrl}/${id}`).pipe(
+      map(res => res.success ?? true),
+      tap(() => {
+        this.loadBudgets().subscribe();
+      })
+    );
   }
 
   getBudgetProgressList(month: string): Observable<BudgetProgress[]> {
