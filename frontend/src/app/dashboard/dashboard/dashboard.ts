@@ -46,67 +46,69 @@ export class Dashboard implements OnInit {
     private sanitizer: DomSanitizer
   ) {}
 
+  selectedPeriod: 'Year' | 'Quarter' | 'Month' = 'Year';
+
   get monthlyChartData(): ChartItem[] {
     const transactions = this.transactionService.getTransactions() || [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
-    if (transactions.length > 0) {
-      const monthMap = new Map<string, { year: number; month: number; income: number; expense: number }>();
+    // Always generate all 12 months (Jan - Dec)
+    let monthDataList = monthNames.map(month => ({
+      month,
+      income: 0,
+      expense: 0,
+      incomePercent: 0,
+      expensePercent: 0
+    }));
 
+    if (transactions.length > 0) {
       transactions.forEach(tx => {
         if (!tx.date) return;
         const d = new Date(tx.date);
         if (isNaN(d.getTime())) return;
         
-        const year = d.getFullYear();
-        const month = d.getMonth(); // 0 - 11
-        const key = `${year}-${String(month + 1).padStart(2, '0')}`;
-
-        if (!monthMap.has(key)) {
-          monthMap.set(key, { year, month, income: 0, expense: 0 });
-        }
-
-        const entry = monthMap.get(key)!;
-        const val = Math.abs(tx.amount || 0);
-        if (tx.type === 'income') {
-          entry.income += val;
-        } else if (tx.type === 'expense') {
-          entry.expense += val;
+        const monthIdx = d.getMonth(); // 0 - 11
+        if (monthIdx >= 0 && monthIdx < 12) {
+          const val = Math.abs(tx.amount || 0);
+          if (tx.type === 'income') {
+            monthDataList[monthIdx].income += val;
+          } else if (tx.type === 'expense') {
+            monthDataList[monthIdx].expense += val;
+          }
         }
       });
-
-      if (monthMap.size > 0) {
-        // Sort keys chronologically
-        const sortedKeys = Array.from(monthMap.keys()).sort();
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        
-        const years = new Set(Array.from(monthMap.values()).map(v => v.year));
-        const multiYear = years.size > 1;
-
-        let maxVal = 0;
-        monthMap.forEach(v => {
-          if (v.income > maxVal) maxVal = v.income;
-          if (v.expense > maxVal) maxVal = v.expense;
-        });
-        if (maxVal === 0) maxVal = 1;
-
-        return sortedKeys.map(key => {
-          const item = monthMap.get(key)!;
-          const monthLabel = multiYear 
-            ? `${monthNames[item.month]} '${String(item.year).slice(2)}`
-            : monthNames[item.month];
-
-          return {
-            month: monthLabel,
-            income: item.income,
-            expense: item.expense,
-            incomePercent: Math.min((item.income / maxVal) * 100, 100),
-            expensePercent: Math.min((item.expense / maxVal) * 100, 100)
-          };
-        });
-      }
+    } else if (this.summary && this.summary.chartData && this.summary.chartData.length > 0) {
+      this.summary.chartData.forEach(item => {
+        const found = monthDataList.find(m => m.month.toLowerCase() === item.month.toLowerCase());
+        if (found) {
+          found.income = item.income || 0;
+          found.expense = item.expense || 0;
+        }
+      });
     }
 
-    return (this.summary && this.summary.chartData) ? this.summary.chartData : [];
+    // Apply period filtering if Quarter or Month selected
+    if (this.selectedPeriod === 'Quarter') {
+      const currentMonth = new Date().getMonth();
+      const quarterStart = Math.floor(currentMonth / 3) * 3;
+      monthDataList = monthDataList.slice(quarterStart, quarterStart + 3);
+    } else if (this.selectedPeriod === 'Month') {
+      const currentMonth = new Date().getMonth();
+      monthDataList = [monthDataList[currentMonth]];
+    }
+
+    let maxVal = 0;
+    monthDataList.forEach(v => {
+      if (v.income > maxVal) maxVal = v.income;
+      if (v.expense > maxVal) maxVal = v.expense;
+    });
+
+    monthDataList.forEach(v => {
+      v.incomePercent = maxVal > 0 ? Math.min((v.income / maxVal) * 100, 100) : 0;
+      v.expensePercent = maxVal > 0 ? Math.min((v.expense / maxVal) * 100, 100) : 0;
+    });
+
+    return monthDataList;
   }
 
   getTrendClass(trend: number | null | undefined, isExpense = false): string {
@@ -141,6 +143,8 @@ export class Dashboard implements OnInit {
     if (user) {
       this.userName = user.fullName || user.name || 'User';
     }
+
+    this.transactionService.loadTransactions().subscribe();
     
     // Check if we have pre-hydrated state to show immediately
     const cached = this.dashboardService.cachedSummary;
@@ -204,6 +208,16 @@ export class Dashboard implements OnInit {
   }
 
   // Budget Charts Helper Getters
+  get maxBudgetChartValue(): number {
+    if (!this.budgetProgressList || this.budgetProgressList.length === 0) return 1;
+    let max = 0;
+    this.budgetProgressList.forEach(p => {
+      if (p.limit > max) max = p.limit;
+      if (p.spent > max) max = p.spent;
+    });
+    return max > 0 ? max : 1;
+  }
+
   get activeBudgets(): BudgetProgress[] {
     return this.budgetProgressList.filter(item => item.spent > 0);
   }

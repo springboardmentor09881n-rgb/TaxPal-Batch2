@@ -25,9 +25,19 @@ export class TransactionService {
   public isLoaded = false;
 
   constructor(private http: HttpClient, private authService: AuthService) {
+    const cached = localStorage.getItem('taxpal_cached_transactions');
+    if (cached) {
+      try {
+        this.transactionsSubject.next(JSON.parse(cached));
+      } catch (e) {
+        localStorage.removeItem('taxpal_cached_transactions');
+      }
+    }
+
     // Clear list when user logs out
     this.authService.currentUser$.subscribe(user => {
       if (!user) {
+        localStorage.removeItem('taxpal_cached_transactions');
         this.transactionsSubject.next([]);
         this.isLoaded = false;
       }
@@ -39,6 +49,7 @@ export class TransactionService {
       map(res => res.success ? res.data : []),
       tap(txs => {
         this.isLoaded = true;
+        localStorage.setItem('taxpal_cached_transactions', JSON.stringify(txs));
         this.transactionsSubject.next(txs);
       })
     );

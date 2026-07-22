@@ -47,15 +47,43 @@
   <!-- Charts Area -->
   <div class="charts-row">
     <div class="card chart-card flex-2">
-      <h3>Income vs Expenses</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="margin: 0;">Income vs Expenses</h3>
+        <div style="display: flex; gap: 0.25rem; background-color: var(--bg-main); padding: 0.2rem; border-radius: 6px; border: 1px solid var(--border-color);">
+          <button 
+            type="button" 
+            (click)="selectedPeriod = 'Year'" 
+            [style.background-color]="selectedPeriod === 'Year' ? 'var(--bg-card)' : 'transparent'"
+            [style.color]="selectedPeriod === 'Year' ? 'var(--primary-color)' : 'var(--text-muted)'"
+            [style.font-weight]="selectedPeriod === 'Year' ? '600' : '500'"
+            style="padding: 0.25rem 0.65rem; font-size: 0.78rem; border: none; border-radius: 4px; cursor: pointer; transition: all 0.2s;"
+          >Year</button>
+          <button 
+            type="button" 
+            (click)="selectedPeriod = 'Quarter'" 
+            [style.background-color]="selectedPeriod === 'Quarter' ? 'var(--bg-card)' : 'transparent'"
+            [style.color]="selectedPeriod === 'Quarter' ? 'var(--primary-color)' : 'var(--text-muted)'"
+            [style.font-weight]="selectedPeriod === 'Quarter' ? '600' : '500'"
+            style="padding: 0.25rem 0.65rem; font-size: 0.78rem; border: none; border-radius: 4px; cursor: pointer; transition: all 0.2s;"
+          >Quarter</button>
+          <button 
+            type="button" 
+            (click)="selectedPeriod = 'Month'" 
+            [style.background-color]="selectedPeriod === 'Month' ? 'var(--bg-card)' : 'transparent'"
+            [style.color]="selectedPeriod === 'Month' ? 'var(--primary-color)' : 'var(--text-muted)'"
+            [style.font-weight]="selectedPeriod === 'Month' ? '600' : '500'"
+            style="padding: 0.25rem 0.65rem; font-size: 0.78rem; border: none; border-radius: 4px; cursor: pointer; transition: all 0.2s;"
+          >Month</button>
+        </div>
+      </div>
       <div class="chart-placeholder">
         <div class="bar-chart">
-          <div class="bar-group" style="flex-direction: column; align-items: center; justify-content: flex-end;" *ngFor="let monthData of monthlyChartData">
-            <div style="display: flex; gap: 0.25rem; align-items: flex-end; height: calc(100% - 20px); width: 100%; justify-content: center;">
-              <div class="bar bar-income" [style.height]="monthData.incomePercent + '%'" [title]="'Income: ' + currencySymbol + monthData.income"></div>
-              <div class="bar bar-expense" [style.height]="monthData.expensePercent + '%'" [title]="'Expense: ' + currencySymbol + monthData.expense"></div>
+          <div class="bar-group" *ngFor="let monthData of monthlyChartData">
+            <div style="display: flex; gap: 2px; align-items: flex-end; height: calc(100% - 22px); width: 100%; justify-content: center;">
+              <div class="bar bar-income" style="background-color: #22c55e;" [style.height]="monthData.incomePercent + '%'" [title]="'Income: ' + currencySymbol + monthData.income"></div>
+              <div class="bar bar-expense" style="background-color: #ef4444;" [style.height]="monthData.expensePercent + '%'" [title]="'Expense: ' + currencySymbol + monthData.expense"></div>
             </div>
-            <div class="month-label" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">{{ monthData.month }}</div>
+            <div class="month-label" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">{{ monthData.month }}</div>
           </div>
           <div *ngIf="monthlyChartData.length === 0" style="text-align: center; width: 100%; color: var(--text-muted); font-style: italic; padding-bottom: 2rem;">
             No monthly transaction history.
@@ -64,11 +92,11 @@
       </div>
       <div class="chart-legend" style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: center; font-size: 0.9rem; color: var(--text-muted);">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <div style="width: 12px; height: 12px; background-color: var(--primary-color); border-radius: 2px;"></div>
+          <div style="width: 12px; height: 12px; background-color: #22c55e; border-radius: 2px;"></div>
           <span>Income: <strong style="color: var(--text-dark);">{{ currencySymbol }}{{ summary.monthlyIncome | number:'1.0-0' }}</strong></span>
         </div>
         <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <div style="width: 12px; height: 12px; background-color: var(--error-color); border-radius: 2px;"></div>
+          <div style="width: 12px; height: 12px; background-color: #ef4444; border-radius: 2px;"></div>
           <span>Expenses: <strong style="color: var(--text-dark);">{{ currencySymbol }}{{ summary.monthlyExpenses | number:'1.0-0' }}</strong></span>
         </div>
       </div>
@@ -76,14 +104,14 @@
 
     <!-- Expense Distribution Pie Chart Card -->
     <div class="card chart-card flex-1">
-      <h3>Expense Distribution</h3>
+      <h3 style="margin-top: 0; margin-bottom: 1.25rem;">Expense Breakdown</h3>
       <div class="chart-placeholder">
         <div class="pie-chart-placeholder-budget" [style.background]="budgetPieChartBackground" [title]="getExpenseDistributionTooltip()"></div>
       </div>
       <div class="chart-legend" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted); padding: 0 1rem; max-height: 150px; overflow-y: auto;">
         <div *ngFor="let item of activeExpenseCategories; let i = index" style="display: flex; align-items: center; justify-content: space-between; width: 100%;" [title]="item.category + ' – ' + (item.percentage | number:'1.0-1') + '%'">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div [style.background-color]="getCategoryColor(item.category)" class="budget-legend-color"></div>
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <span class="budget-legend-color" [style.background-color]="getCategoryColor(item.category)" style="display: inline-block; width: 12px; height: 12px; min-width: 12px; min-height: 12px; border-radius: 50%; flex-shrink: 0;"></span>
             <span>{{ item.category }}</span>
           </div>
           <strong style="color: var(--text-dark);">{{ item.percentage | number:'1.0-1' }}%</strong>
@@ -140,33 +168,33 @@
   <div class="charts-row" style="margin-bottom: 2rem;" *ngIf="totalBudget > 0">
     <div class="card chart-card" style="width: 100%;">
       <h3>Budget Usage (Limit vs Spent)</h3>
-      <div class="chart-placeholder">
+      <div class="chart-placeholder" style="height: 220px;">
         <div class="bar-chart-container">
           <div class="category-bar-group" *ngFor="let progress of budgetProgressList">
             <div class="bars-wrapper">
               <div 
                 class="bar-limit" 
                 [style.height]="'100%'" 
-                [title]="'Limit: ' + currencySymbol + progress.limit"
+                [title]="'Limit: ' + currencySymbol + (progress.limit | number:'1.2-2')"
               ></div>
               <div 
                 class="bar-spent" 
-                [style.height]="Math.min((progress.spent / progress.limit) * 100, 100) + '%'" 
+                [style.height]="Math.min((progress.spent / (progress.limit || 1)) * 100, 100) + '%'" 
                 [style.background-color]="getCategoryColor(progress.budget.category)"
-                [title]="'Spent: ' + currencySymbol + progress.spent + ' (' + (progress.percentage | number:'1.0-0') + '%)'"
+                [title]="'Spent: ' + currencySymbol + (progress.spent | number:'1.2-2') + ' (' + (progress.percentage | number:'1.0-0') + '%)'"
               ></div>
             </div>
             <div class="category-label" [title]="progress.budget.category">{{ progress.budget.category }}</div>
           </div>
         </div>
       </div>
-      <div class="chart-legend" style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: center; font-size: 0.9rem; color: var(--text-muted);">
+      <div class="chart-legend" style="display: flex; gap: 1.5rem; margin-top: 1.25rem; justify-content: center; font-size: 0.9rem; color: var(--text-muted);">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <div style="width: 12px; height: 12px; background-color: var(--border-color); border-radius: 2px;"></div>
+          <div style="width: 14px; height: 14px; background-color: var(--border-color); border-radius: 3px;"></div>
           <span>Budget Limit</span>
         </div>
         <div style="display: flex; align-items: center; gap: 0.5rem;">
-          <div style="width: 12px; height: 12px; background-color: var(--primary-color); border-radius: 2px;"></div>
+          <div style="width: 14px; height: 14px; background-color: #6366f1; border-radius: 3px;"></div>
           <span>Spent</span>
         </div>
       </div>

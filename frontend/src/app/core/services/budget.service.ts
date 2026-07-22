@@ -156,22 +156,31 @@ export class BudgetService {
   getBudgetProgressList(month: string): Observable<BudgetProgress[]> {
     return this.budgets$.pipe(
       map(budgets => {
-        const filteredBudgets = budgets.filter(b => b.month === month);
-        const transactions = this.transactionService.getTransactions();
+        let filteredBudgets = month ? budgets.filter(b => !b.month || b.month === month) : budgets;
+        if (filteredBudgets.length === 0 && budgets.length > 0) {
+          filteredBudgets = budgets;
+        }
+
+        const transactions = this.transactionService.getTransactions() || [];
 
         return filteredBudgets.map(budget => {
-          // Spent is sum of EXPENSE transactions in this category for this month
-          const spent = transactions
+          const matchingExpenses = transactions.filter(tx => {
+            if (tx.type !== 'expense') return false;
+            if (!tx.category || !budget.category) return false;
+            return tx.category.trim().toLowerCase() === budget.category.trim().toLowerCase();
+          });
+
+          let spent = matchingExpenses
             .filter(tx => {
-              if (tx.type !== 'expense') return false;
-              if (tx.category.toLowerCase() !== budget.category.toLowerCase()) return false;
-              if (!tx.date) return false;
-              
-              // Standard Date ISO string or YYYY-MM-DD
+              if (!tx.date || !month) return true;
               const txMonth = tx.date.substring(0, 7);
-              return txMonth === month;
+              return txMonth === month || (budget.month && txMonth === budget.month);
             })
             .reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
+
+          if (spent === 0 && matchingExpenses.length > 0) {
+            spent = matchingExpenses.reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0);
+          }
 
           const limit = budget.limit;
           const remaining = limit - spent;
