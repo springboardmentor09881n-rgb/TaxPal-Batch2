@@ -249,4 +249,8 @@ export class BudgetPage implements OnInit {
       this.showSuggestions = false;
     }
   }
+
+  getCategoryColor(category: string): string {
+    return this.categoryService.getCategoryColor(category);
+  }
 }

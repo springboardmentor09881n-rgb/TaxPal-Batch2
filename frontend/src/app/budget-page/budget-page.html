@@ -69,8 +69,8 @@
         [ngClass]="{'bg-success': overallPercentage < 70, 'bg-warning': overallPercentage >= 70 && overallPercentage <= 90, 'bg-danger': overallPercentage > 90}"
       ></div>
     </div>
-    <div class="exceeded-warning-banner" *ngIf="overallPercentage > 100">
-      ⚠️ Budget Exceeded: You have overspent by {{ currencySymbol }}{{ Math.abs(totalRemaining) | number:'1.2-2' }}!
+    <div class="exceeded-warning-banner" *ngIf="overallPercentage > 100" style="display: flex; align-items: center; gap: 0.5rem;">
+      <i class="ph ph-warning" style="font-size: 1.2rem;"></i> Budget Exceeded: You have overspent by {{ currencySymbol }}{{ Math.abs(totalRemaining) | number:'1.2-2' }}!
     </div>
   </div>
 
@@ -98,15 +98,20 @@
         </thead>
         <tbody>
           <tr *ngFor="let item of budgetProgressList">
-            <td style="font-weight: 600; color: var(--text-dark);">{{ item.budget.category }}</td>
+            <td>
+              <div class="category-name-cell">
+                <span class="category-color-dot" [style.background-color]="getCategoryColor(item.budget.category)"></span>
+                <strong>{{ item.budget.category }}</strong>
+              </div>
+            </td>
             <td>{{ currencySymbol }}{{ item.limit | number:'1.2-2' }}</td>
-            <td>{{ currencySymbol }}{{ item.spent | number:'1.2-2' }}</td>
+            <td [ngClass]="{'text-danger': item.isExceeded}">{{ currencySymbol }}{{ item.spent | number:'1.2-2' }}</td>
             <td [ngClass]="{'text-danger': item.remaining < 0, 'text-success': item.remaining >= 0}">
               {{ item.remaining < 0 ? '-' : '' }}{{ currencySymbol }}{{ Math.abs(item.remaining) | number:'1.2-2' }}
             </td>
             <td>
-              <div class="cell-progress-wrapper">
-                <div class="progress-info-row">
+              <div class="progress-cell">
+                <div class="progress-info">
                   <span class="badge" [ngClass]="{'badge-success': item.status === 'Green', 'badge-warning': item.status === 'Orange', 'badge-danger': item.status === 'Red'}">
                     {{ item.isExceeded ? 'Budget Exceeded' : (item.percentage | number:'1.0-0') + '%' }}
                   </span>
@@ -122,8 +127,8 @@
             </td>
             <td style="text-align: right;">
               <div class="action-buttons-group">
-                <button class="btn-icon-action" (click)="openEditModal(item)" title="Edit Budget">✏️</button>
-                <button class="btn-icon-action text-danger" (click)="deleteBudget(item.budget.id, item.budget.category)" title="Delete Budget">❌</button>
+                <button class="btn-icon-action" (click)="openEditModal(item)" title="Edit Budget" aria-label="Edit Budget"><i class="ph ph-pencil-simple"></i></button>
+                <button class="btn-icon-action text-danger" (click)="deleteBudget(item.budget.id, item.budget.category)" title="Delete Budget" aria-label="Delete Budget"><i class="ph ph-trash"></i></button>
               </div>
             </td>
           </tr>
@@ -133,7 +138,7 @@
     
     <ng-template #noBudgets>
       <div class="empty-state-wrapper">
-        <div class="empty-icon">📊</div>
+        <div class="empty-icon"><i class="ph ph-chart-bar" style="font-size: 2.5rem; color: var(--text-muted);"></i></div>
         <h4>No budgets configured</h4>
         <p class="text-muted">You haven't set any budgets for {{ selectedMonth | date:'MMMM yyyy' }}. Click "Set New Budget" to get started.</p>
         <button class="btn-primary mt-1" style="width: auto;" (click)="openAddModal()">Set New Budget</button>

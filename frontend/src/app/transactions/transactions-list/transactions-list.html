@@ -4,8 +4,8 @@
     <p class="text-muted">View and manage your recent income and expenses.</p>
   </div>
   <div class="header-actions">
-    <a routerLink="/income" class="btn-primary" style="margin-right: 0.5rem;">+ Record Income</a>
-    <a routerLink="/expense" class="btn-primary" style="background-color: var(--error-color);">+ Record Expense</a>
+    <a routerLink="/income" class="btn-primary" style="margin-right: 0.5rem; display: inline-flex; align-items: center; gap: 0.35rem;"><i class="ph ph-plus-circle"></i> Record Income</a>
+    <a routerLink="/expense" class="btn-primary" style="background-color: var(--error-color); display: inline-flex; align-items: center; gap: 0.35rem;"><i class="ph ph-minus-circle"></i> Record Expense</a>
   </div>
 </div>
 
@@ -44,8 +44,8 @@
             {{ tx.type === 'income' ? '+' : '-' }}{{ currencySymbol }}{{ tx.amount | number:'1.2-2' }}
           </td>
           <td>
-            <button [routerLink]="['/edit', tx.id]" style="background: none; border: none; color: var(--primary-color); cursor: pointer; margin-right: 0.5rem; font-weight: 500;">✏️ Edit</button>
-            <button (click)="onDelete(tx.id)" style="background: none; border: none; color: var(--error-color); cursor: pointer; font-weight: 500;">🗑️ Delete</button>
+            <button [routerLink]="['/edit', tx.id]" style="background: none; border: none; color: var(--primary-color); cursor: pointer; margin-right: 0.5rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="ph ph-pencil-simple"></i> Edit</button>
+            <button (click)="onDelete(tx.id)" style="background: none; border: none; color: var(--error-color); cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="ph ph-trash"></i> Delete</button>
           </td>
         </tr>
       </tbody>

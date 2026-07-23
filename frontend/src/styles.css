@@ -1,3 +1,5 @@
+@import '@phosphor-icons/web/regular/style.css';
+
 /* Global Design Tokens */
 :root {
   --primary-color: #4f46e5; /* Vibrant Indigo */
@@ -436,7 +438,16 @@ a:hover {
 }
 .nav-item .icon {
   margin-right: 0.75rem;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+i.ph {
+  font-size: 1.35rem;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 .main-wrapper {

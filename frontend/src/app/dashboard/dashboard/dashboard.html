@@ -14,7 +14,7 @@
 </div>
 
 <div *ngIf="!isLoading && !summary && loadError" class="card" style="margin: 2rem; padding: 2rem; border-left: 4px solid var(--error-color); background-color: #fef2f2; color: #991b1b; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-  <h3 style="margin-top: 0; color: #991b1b;">⚠️ API Connection Error</h3>
+  <h3 style="margin-top: 0; color: #991b1b; display: flex; align-items: center; gap: 0.5rem;"><i class="ph ph-warning-circle"></i> API Connection Error</h3>
   <p style="margin-top: 0.5rem; color: #7f1d1d; font-size: 0.95rem;">We encountered an issue loading your financial dashboard data. Please make sure the backend server is running on port 5000 and is connected to MongoDB.</p>
   <pre style="margin-top: 1rem; padding: 1rem; background-color: #fee2e2; border-radius: 4px; overflow-x: auto; font-size: 0.85rem; border: 1px solid #fca5a5; font-family: monospace;">{{ loadError }}</pre>
 </div>
@@ -23,22 +23,34 @@
   <!-- Summary Cards -->
   <div class="summary-cards">
     <div class="card summary-card">
-      <h3>Monthly Income</h3>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <h3 style="margin: 0;">Monthly Income</h3>
+        <i class="ph ph-trend-up" style="font-size: 1.4rem; color: #22c55e;"></i>
+      </div>
       <div class="amount">{{ currencySymbol }}{{ summary.monthlyIncome | number:'1.2-2' }}</div>
       <div class="trend" [ngClass]="getTrendClass(summary.incomeTrend)">{{ getTrendText(summary.incomeTrend) }}</div>
     </div>
     <div class="card summary-card">
-      <h3>Monthly Expenses</h3>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <h3 style="margin: 0;">Monthly Expenses</h3>
+        <i class="ph ph-trend-down" style="font-size: 1.4rem; color: #ef4444;"></i>
+      </div>
       <div class="amount">{{ currencySymbol }}{{ summary.monthlyExpenses | number:'1.2-2' }}</div>
       <div class="trend" [ngClass]="getTrendClass(summary.expenseTrend, true)">{{ getTrendText(summary.expenseTrend) }}</div>
     </div>
     <div class="card summary-card">
-      <h3>Estimated Tax Due</h3>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <h3 style="margin: 0;">Estimated Tax Due</h3>
+        <i class="ph ph-calculator" style="font-size: 1.4rem; color: #6366f1;"></i>
+      </div>
       <div class="amount">{{ currencySymbol }}{{ summary.estimatedTaxDue | number:'1.2-2' }}</div>
       <div class="trend neutral">Based on current brackets</div>
     </div>
     <div class="card summary-card">
-      <h3>Savings Rate</h3>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <h3 style="margin: 0;">Savings Rate</h3>
+        <i class="ph ph-piggy-bank" style="font-size: 1.4rem; color: #f59e0b;"></i>
+      </div>
       <div class="amount">{{ summary.savingsRate }}%</div>
       <div class="trend" [ngClass]="getTrendClass(summary.savingsTrend)">{{ getTrendText(summary.savingsTrend) }}</div>
     </div>
@@ -159,8 +171,8 @@
         [ngClass]="{'bg-success': overallBudgetProgressPercent < 70, 'bg-warning': overallBudgetProgressPercent >= 70 && overallBudgetProgressPercent <= 90, 'bg-danger': overallBudgetProgressPercent > 90}"
       ></div>
     </div>
-    <div class="alert-budget-banner" *ngIf="overallBudgetProgressPercent > 100">
-      ⚠️ Overspending detected! You have exceeded your overall monthly budget limit by {{ currencySymbol }}{{ Math.abs(remainingBudget) | number:'1.2-2' }}.
+    <div class="alert-budget-banner" *ngIf="overallBudgetProgressPercent > 100" style="display: flex; align-items: center; gap: 0.5rem;">
+      <i class="ph ph-warning" style="font-size: 1.2rem;"></i> Overspending detected! You have exceeded your overall monthly budget limit by {{ currencySymbol }}{{ Math.abs(remainingBudget) | number:'1.2-2' }}.
     </div>
   </div>
 

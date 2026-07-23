@@ -12,28 +12,28 @@
         (click)="activeTab = 'profile'"
         class="sidebar-tab-btn"
       >
-        <span class="tab-icon">👤</span> Profile
+        <span class="tab-icon"><i class="ph ph-user-circle"></i></span> Profile
       </button>
       <button 
         [class.active]="activeTab === 'categories'" 
         (click)="activeTab = 'categories'"
         class="sidebar-tab-btn"
       >
-        <span class="tab-icon">🏷️</span> Categories
+        <span class="tab-icon"><i class="ph ph-tag"></i></span> Categories
       </button>
       <button 
         [class.active]="activeTab === 'notifications'" 
         (click)="activeTab = 'notifications'"
         class="sidebar-tab-btn"
       >
-        <span class="tab-icon">🔔</span> Notifications
+        <span class="tab-icon"><i class="ph ph-bell-simple"></i></span> Notifications
       </button>
       <button 
         [class.active]="activeTab === 'security'" 
         (click)="activeTab = 'security'"
         class="sidebar-tab-btn"
       >
-        <span class="tab-icon">🔒</span> Security
+        <span class="tab-icon"><i class="ph ph-shield-check"></i></span> Security
       </button>
     </aside>
 
@@ -95,7 +95,7 @@
             <p class="section-subtitle">Configure categories for your transactions and budgets.</p>
           </div>
           <button class="btn-primary btn-sm-add" (click)="openAddModal()">
-            <span class="plus-icon">+</span> Add New Category
+            <i class="ph ph-plus-circle" style="font-size: 1.1rem; margin-right: 0.25rem;"></i> Add New Category
           </button>
         </div>
 
@@ -138,8 +138,8 @@
                 <span>{{ cat }}</span>
                 <div class="pill-actions">
                   <input type="color" class="pill-color-picker" [value]="getCategoryColor(cat)" (change)="savePillColor(cat, $event)" title="Change color">
-                  <button class="pill-btn edit-pill-btn" (click)="openEditModal(cat)" title="Edit category">✏️</button>
-                  <button class="pill-btn delete-pill-btn" (click)="deleteCategory(cat)" title="Delete category">❌</button>
+                  <button class="pill-btn edit-pill-btn" (click)="openEditModal(cat)" title="Edit category" aria-label="Edit category"><i class="ph ph-pencil-simple"></i></button>
+                  <button class="pill-btn delete-pill-btn" (click)="deleteCategory(cat)" title="Delete category" aria-label="Delete category"><i class="ph ph-trash"></i></button>
                 </div>
               </div>
             </div>
