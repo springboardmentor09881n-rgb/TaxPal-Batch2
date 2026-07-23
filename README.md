@@ -2,7 +2,7 @@
 
 # TaxPal
 
-TaxPal is a full-stack web application designed to help freelancers and self-employed individuals manage their finances efficiently. The application enables users to track income and expenses, manage transactions, estimate taxes, and generate financial insights through an interactive dashboard.
+TaxPal is a full-stack web application designed to help freelancers and self-employed individuals manage their finances efficiently. The application enables users to track income and expenses, manage transactions, estimate taxes, manage budgets, categorize expenses, and generate financial insights through an interactive dashboard.
 
 ---
 
@@ -72,6 +72,23 @@ TaxPal-Batch2
 
 ---
 
+# 📌 Milestone 2 Features
+
+- ✅ Budget Management (CRUD)
+- ✅ Budget Progress Tracking
+- ✅ Category Management (CRUD)
+- ✅ Default Categories
+- ✅ Category Suggestion API
+- ✅ Budget Planning
+- ✅ JWT Authentication & Authorization
+- ✅ Request Validation
+- ✅ User Ownership Enforcement
+- ✅ Frontend-Backend Integration
+- ✅ API Testing
+- ✅ End-to-End Testing
+
+---
+
 # 📊 Current Project Status
 
 ## ✅ Milestone 1 Completed
@@ -94,6 +111,34 @@ The following modules have been successfully completed and integrated:
 - End-to-end application testing
 - Bug fixes and optimization
 - Project documentation
+- Git workflow implementation
+
+---
+
+## ✅ Milestone 2 Completed
+
+The following modules have been successfully implemented, tested, integrated, and merged into the **main** branch:
+
+- Frontend implementation completed
+- Budget module implementation
+- Budget CRUD APIs
+- Budget Progress API
+- Category module implementation
+- Category CRUD APIs
+- Default Categories API
+- Category Suggestion API
+- Budget Planning functionality
+- JWT Authentication integration
+- Request validation
+- User ownership enforcement
+- MongoDB Atlas integration
+- Frontend-Backend integration
+- Runtime API testing using Postman
+- CRUD testing
+- Authentication & Authorization testing
+- End-to-End application testing
+- Bug fixes and optimization
+- Project documentation updated
 - Git workflow implementation
 
 ---
@@ -136,38 +181,57 @@ The following modules have been successfully completed and integrated:
 
 ---
 
-# 🛠 Future Enhancements (Milestone 2)
+# 🎯 Milestone 2 Deliverables
 
-- Tax Estimation Module
+- Budget Management
 - Budget Planning
-- Financial Reports
-- Data Visualization & Analytics
-- Export Reports (PDF/Excel)
-- Notifications & Reminders
-- Advanced Dashboard Insights
+- Budget Progress Tracking
+- Category Management
+- Category CRUD APIs
+- Default Categories
+- Smart Category Suggestions
+- Secure JWT Protected APIs
+- Request Validation
+- User Ownership Enforcement
+- Angular Frontend
+- RESTful Backend APIs
+- MongoDB Atlas Integration
+- Complete Frontend-Backend Integration
+- API Testing using Postman
+- End-to-End Testing
+- Stable and Functional Application
 
 ---
+
 
 # 👨‍💻 Team
 
 **Project:** TaxPal – Personal Finance & Tax Estimator
 
-**Frontend Team**
+## Frontend Team
+
 - Sachin Shekhar (Team Lead)
 - Debjani Roy
 - Jalal Jasmine
 
-**Backend Team**
+## Backend Team
+
 - Varshistha Gopalam
 - Rehan Shaik
 
-**Database Team**
+## Database Team
+
 - Jainee Jain
 
 ---
 
-# 📌 Status
+# ✅ Overall Project Status
 
-**Milestone 1 Successfully Completed ✅**
+**Milestone 1 and Milestone 2 have been successfully completed.**
 
-The application has been fully integrated, tested, and is ready for demonstration and review.
+- ✅ All planned frontend, backend, and database functionalities have been implemented.
+- ✅ All APIs have been reviewed, tested, and validated.
+- ✅ Frontend and backend have been fully integrated.
+- ✅ End-to-end testing has been completed successfully.
+- ✅ All changes have been merged into the `main` branch following the team's Git workflow.
+- ✅ The application is stable and ready for **Milestone 3** development.
