@@ -12,8 +12,17 @@ const formatBudget = (b) => {
 };
 
 const createBudget = async (budgetData) => {
-  const budget = await Budget.create(budgetData);
-  return formatBudget(budget);
+  try {
+    const budget = await Budget.create(budgetData);
+    return formatBudget(budget);
+  } catch (err) {
+    if (err.code === 11000) {
+      const error = new Error(`A budget for category "${budgetData.category}" and month "${budgetData.month}" already exists.`);
+      error.statusCode = 409;
+      throw error;
+    }
+    throw err;
+  }
 };
 
 const getBudgets = async (userId) => {
@@ -32,17 +41,26 @@ const getBudgetById = async (id, userId) => {
 };
 
 const updateBudget = async (id, userId, updateData) => {
-  const budget = await Budget.findOneAndUpdate(
-    { _id: id, userId },
-    updateData,
-    { new: true, runValidators: true }
-  );
-  if (!budget) {
-    const error = new Error("Budget not found.");
-    error.statusCode = 404;
-    throw error;
+  try {
+    const budget = await Budget.findOneAndUpdate(
+      { _id: id, userId },
+      updateData,
+      { new: true, runValidators: true }
+    );
+    if (!budget) {
+      const error = new Error("Budget not found.");
+      error.statusCode = 404;
+      throw error;
+    }
+    return formatBudget(budget);
+  } catch (err) {
+    if (err.code === 11000) {
+      const error = new Error("A budget for this category and month already exists.");
+      error.statusCode = 409;
+      throw error;
+    }
+    throw err;
   }
-  return formatBudget(budget);
 };
 
 const deleteBudget = async (id, userId) => {
