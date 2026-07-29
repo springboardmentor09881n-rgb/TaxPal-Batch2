@@ -1,0 +1,52 @@
+<div class="budget-card" [ngClass]="progressColorClass">
+  <div class="card-top">
+    <div class="category-info">
+      <h4 class="category-name">{{ progress.category }}</h4>
+      <p class="budget-period">Month: {{ progress.month }}</p>
+    </div>
+    
+    <!-- Action buttons -->
+    <div class="card-actions">
+      <button class="action-btn edit-btn" (click)="onEditClick()" title="Edit Budget">✏️</button>
+      <button class="action-btn delete-btn" (click)="onDeleteClick()" title="Delete Budget">🗑️</button>
+    </div>
+  </div>
+
+  <div class="card-metrics">
+    <!-- Progress Indicator Badge -->
+    <div class="status-badge" [ngClass]="progressColorClass">
+      {{ statusText }}
+    </div>
+    
+    <!-- Limit, Spent & Remaining -->
+    <div class="metric-row">
+      <div class="metric">
+        <span class="label">Spent</span>
+        <span class="value">{{ currencySymbol }}{{ progress.spent | number:'1.2-2' }}</span>
+      </div>
+      <div class="metric text-center">
+        <span class="label">Limit</span>
+        <span class="value font-semibold">{{ currencySymbol }}{{ progress.limit | number:'1.2-2' }}</span>
+      </div>
+      <div class="metric text-right">
+        <span class="label">Remaining</span>
+        <span class="value" [class.negative]="progress.remaining < 0">
+          {{ progress.remaining < 0 ? '-' : '' }}{{ currencySymbol }}{{ (progress.remaining < 0 ? -progress.remaining : progress.remaining) | number:'1.2-2' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" 
+           [style.width.%]="progressPercent"
+           [ngClass]="progressColorClass">
+      </div>
+    </div>
+
+    <!-- Progress Percentage text -->
+    <div class="progress-percentage-label">
+      <span>{{ progress.progressPercentage | number:'1.0-1' }}% of limit used</span>
+    </div>
+  </div>
+</div>

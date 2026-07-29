@@ -1,0 +1,49 @@
+<div class="progress-summary-card card" [ngClass]="progressColorClass">
+  <div class="summary-header">
+    <h3>Overall Monthly Budget Progress</h3>
+    <span *ngIf="isExceeded" class="exceeded-badge animate-pulse">Budget Exceeded ⚠️</span>
+  </div>
+
+  <div class="summary-grid" *ngIf="progressList.length > 0; else noBudgets">
+    <!-- Stat Item: Budget Limit -->
+    <div class="stat-item">
+      <span class="stat-label">Total Budget Limit</span>
+      <span class="stat-value">{{ currencySymbol }}{{ overall.totalLimit | number:'1.2-2' }}</span>
+    </div>
+
+    <!-- Stat Item: Spent -->
+    <div class="stat-item text-center">
+      <span class="stat-label">Total Amount Spent</span>
+      <span class="stat-value">{{ currencySymbol }}{{ overall.totalSpent | number:'1.2-2' }}</span>
+    </div>
+
+    <!-- Stat Item: Remaining -->
+    <div class="stat-item text-right">
+      <span class="stat-label">Total Remaining Budget</span>
+      <span class="stat-value" [class.negative]="overall.totalRemaining < 0">
+        {{ overall.totalRemaining < 0 ? '-' : '' }}{{ currencySymbol }}{{ (overall.totalRemaining < 0 ? -overall.totalRemaining : overall.totalRemaining) | number:'1.2-2' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="progress-details" *ngIf="progressList.length > 0">
+    <div class="progress-bar-wrapper">
+      <div class="progress-bar-outer">
+        <div class="progress-bar-inner" 
+             [style.width.%]="progressPercent" 
+             [ngClass]="progressColorClass"></div>
+      </div>
+      <span class="progress-ratio">{{ overall.overallProgressPercentage | number:'1.0-1' }}% Used</span>
+    </div>
+
+    <div *ngIf="isExceeded" class="alert-banner">
+      <strong>Attention!</strong> You have exceeded your overall monthly budget limit by {{ currencySymbol }}{{ -overall.totalRemaining | number:'1.2-2' }}. Please review your expenses.
+    </div>
+  </div>
+
+  <ng-template #noBudgets>
+    <div class="no-budgets-message">
+      No budgets created for this month. Click the <strong>"Create Budget"</strong> button to start tracking your expenses!
+    </div>
+  </ng-template>
+</div>

@@ -1,0 +1,108 @@
+<div class="budget-form-container">
+  <h3 class="form-title">{{ isEditMode ? 'Edit Budget' : 'Add New Budget' }}</h3>
+  <p class="form-subtitle">Plan your monthly limits and receive notifications on progress.</p>
+
+  <form [formGroup]="budgetForm" (ngSubmit)="onSubmit()" class="budget-form">
+    <!-- Expense vs Income Type Toggle (Only editable in create mode to keep limits clean) -->
+    <div class="form-group" *ngIf="!isEditMode">
+      <label>Budget Type</label>
+      <div class="toggle-group">
+        <button 
+          type="button" 
+          [class.active]="categoryType === 'expense'"
+          (click)="onTypeChange('expense')"
+          class="toggle-btn flex-1">
+          📉 Expense Limit
+        </button>
+        <button 
+          type="button" 
+          [class.active]="categoryType === 'income'"
+          (click)="onTypeChange('income')"
+          class="toggle-btn flex-1">
+          📈 Income Target
+        </button>
+      </div>
+    </div>
+
+    <!-- Category Dropdown / Suggestions -->
+    <div class="form-group">
+      <label for="category">Category</label>
+      <select 
+        id="category" 
+        formControlName="category" 
+        (change)="onCategoryChange($event)"
+        [class.is-invalid]="budgetForm.get('category')?.touched && budgetForm.get('category')?.invalid">
+        <option value="" disabled selected>-- Select Category --</option>
+        <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+        <option value="Custom">+ Custom Category</option>
+      </select>
+      <div *ngIf="budgetForm.get('category')?.touched && budgetForm.get('category')?.invalid" class="error-text">
+        Category is required.
+      </div>
+    </div>
+
+    <!-- Custom Category Input -->
+    <div class="form-group slide-down" *ngIf="showCustomCategoryInput">
+      <label for="customCategory">Custom Category Name</label>
+      <input 
+        type="text" 
+        id="customCategory" 
+        formControlName="customCategory" 
+        placeholder="Enter custom category name"
+        [class.is-invalid]="budgetForm.get('customCategory')?.touched && budgetForm.get('customCategory')?.invalid" />
+      <div *ngIf="budgetForm.get('customCategory')?.touched && budgetForm.get('customCategory')?.invalid" class="error-text">
+        Please specify a custom category name.
+      </div>
+    </div>
+
+    <div class="form-row">
+      <!-- Limit Amount -->
+      <div class="form-group flex-1">
+        <label for="limit">Budget Limit Amount (₹)</label>
+        <input 
+          type="number" 
+          id="limit" 
+          formControlName="limit" 
+          placeholder="0.00" 
+          min="0.01" 
+          step="0.01"
+          [class.is-invalid]="budgetForm.get('limit')?.touched && budgetForm.get('limit')?.invalid" />
+        <div *ngIf="budgetForm.get('limit')?.touched && budgetForm.get('limit')?.invalid" class="error-text">
+          <span *ngIf="budgetForm.get('limit')?.errors?.['required']">Limit is required.</span>
+          <span *ngIf="budgetForm.get('limit')?.errors?.['min']">Amount must be greater than 0.</span>
+        </div>
+      </div>
+
+      <!-- Month -->
+      <div class="form-group flex-1">
+        <label for="month">Month</label>
+        <input 
+          type="month" 
+          id="month" 
+          formControlName="month" 
+          [class.is-invalid]="budgetForm.get('month')?.touched && budgetForm.get('month')?.invalid" />
+        <div *ngIf="budgetForm.get('month')?.touched && budgetForm.get('month')?.invalid" class="error-text">
+          Month is required.
+        </div>
+      </div>
+    </div>
+
+    <!-- Description (Optional) -->
+    <div class="form-group">
+      <label for="description">Description (optional)</label>
+      <textarea 
+        id="description" 
+        formControlName="description" 
+        placeholder="Add context to this budget (type here to auto-detect category)..."
+        rows="2"></textarea>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="onCancelClick()">Cancel</button>
+      <button type="submit" class="btn-primary" [disabled]="budgetForm.invalid">
+        {{ isEditMode ? 'Update Budget' : 'Create Budget' }}
+      </button>
+    </div>
+  </form>
+</div>

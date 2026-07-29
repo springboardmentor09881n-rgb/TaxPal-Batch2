@@ -1,0 +1,149 @@
+<div class="charts-row">
+  <!-- Bar Chart: Budget Limit vs Spent -->
+  <div class="card chart-card flex-2">
+    <h3>Budget Limit vs Spending</h3>
+    <div class="svg-container" *ngIf="bars.length > 0; else noBarData">
+      <svg [attr.viewBox]="'0 0 ' + svgWidth + ' ' + svgHeight" width="100%" height="100%">
+        <!-- Y Grid Lines & Labels -->
+        <g *ngFor="let tick of yTicks; let i = index">
+          <line 
+            [attr.x1]="paddingLeft" 
+            [attr.y1]="svgHeight - paddingBottom - (graphHeight / 4) * i"
+            [attr.x2]="svgWidth - paddingRight" 
+            [attr.y2]="svgHeight - paddingBottom - (graphHeight / 4) * i"
+            stroke="var(--border-color)" 
+            stroke-width="1"
+            stroke-dasharray="4,4">
+          </line>
+          <text 
+            [attr.x]="paddingLeft - 10" 
+            [attr.y]="svgHeight - paddingBottom - (graphHeight / 4) * i + 4"
+            fill="var(--text-muted)"
+            font-size="11"
+            text-anchor="end">
+            {{ currencySymbol }}{{ formatTick(tick) }}
+          </text>
+        </g>
+
+        <!-- X Axis Base Line -->
+        <line 
+          [attr.x1]="paddingLeft" 
+          [attr.y1]="svgHeight - paddingBottom"
+          [attr.x2]="svgWidth - paddingRight" 
+          [attr.y2]="svgHeight - paddingBottom"
+          stroke="var(--text-muted)" 
+          stroke-width="1.5">
+        </line>
+
+        <!-- Bars & Labels -->
+        <g *ngFor="let bar of bars; let i = index">
+          <!-- Limit Bar (Background Indigo) -->
+          <rect
+            [attr.x]="bar.x"
+            [attr.y]="bar.limitY"
+            [attr.width]="(graphWidth / bars.length) * 0.3"
+            [attr.height]="bar.limitHeight"
+            fill="#818cf8"
+            rx="4"
+            class="bar-rect">
+            <title>{{ bar.category }} Limit: {{ currencySymbol }}{{ bar.limitAmount | number:'1.2-2' }}</title>
+          </rect>
+          
+          <!-- Spent Bar (Dynamic colors) -->
+          <rect
+            [attr.x]="bar.x + (graphWidth / bars.length) * 0.3 + 4"
+            [attr.y]="bar.spentY"
+            [attr.width]="(graphWidth / bars.length) * 0.3"
+            [attr.height]="bar.spentHeight"
+            [ngClass]="bar.spentColorClass"
+            rx="4"
+            class="bar-rect">
+            <title>{{ bar.category }} Spent: {{ currencySymbol }}{{ bar.spentAmount | number:'1.2-2' }}</title>
+          </rect>
+
+          <!-- Category Text -->
+          <text
+            [attr.x]="bar.x + (graphWidth / bars.length) * 0.3 + 2"
+            [attr.y]="svgHeight - paddingBottom + 18"
+            fill="var(--text-muted)"
+            font-size="11"
+            text-anchor="middle"
+            class="category-label-text">
+            {{ bar.category.length > 8 ? (bar.category | slice:0:7) + '..' : bar.category }}
+          </text>
+        </g>
+      </svg>
+      
+      <!-- Custom Chart Legend -->
+      <div class="chart-legend horizontal">
+        <div class="legend-item">
+          <span class="legend-color limit"></span>
+          <span>Limit</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color spent-good"></span>
+          <span>Spent (&lt;70%)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color spent-warning"></span>
+          <span>Warning (70-90%)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color spent-exceeded"></span>
+          <span>Exceeded (&gt;90%)</span>
+        </div>
+      </div>
+    </div>
+    
+    <ng-template #noBarData>
+      <div class="chart-empty">
+        No budget data available to display bar chart.
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Pie Chart: Expense Distribution -->
+  <div class="card chart-card flex-1">
+    <h3>Expense Distribution</h3>
+    <div class="donut-container" *ngIf="pieSectors.length > 0; else noPieData">
+      <div class="donut-svg-wrapper">
+        <svg viewBox="0 0 240 240" width="160" height="160">
+          <g>
+            <path 
+              *ngFor="let sector of pieSectors" 
+              [attr.d]="sector.pathD" 
+              [attr.fill]="sector.color"
+              class="donut-sector">
+              <title>{{ sector.category }}: {{ currencySymbol }}{{ sector.amount | number:'1.2-2' }} ({{ sector.percentage | number:'1.0-1' }}%)</title>
+            </path>
+          </g>
+          <!-- Mask center of pie to make it a donut -->
+          <circle cx="120" cy="120" r="55" fill="var(--bg-card)"></circle>
+        </svg>
+        <div class="donut-inner-text">
+          <span class="total-label">Total Spent</span>
+          <span class="total-amount">{{ currencySymbol }}{{ totalExpenses | number:'1.0-0' }}</span>
+        </div>
+      </div>
+
+      <!-- Pie Legend -->
+      <div class="pie-legend">
+        <div *ngFor="let sector of pieSectors" class="pie-legend-row">
+          <div class="pie-legend-label">
+            <span [style.background-color]="sector.color" class="pie-legend-color"></span>
+            <span class="pie-legend-text">{{ sector.category }}</span>
+          </div>
+          <span class="pie-legend-value font-semibold">
+            {{ sector.percentage | number:'1.0-1' }}%
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noPieData>
+      <div class="chart-empty">
+        No expense data recorded this month.
+      </div>
+    </ng-template>
+  </div>
+</div>

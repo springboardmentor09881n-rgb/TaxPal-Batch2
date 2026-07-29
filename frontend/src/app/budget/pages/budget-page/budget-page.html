@@ -1,0 +1,108 @@
+<div class="budget-page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Budget Management</h1>
+      <p class="text-muted">Set target savings limits and track your categorical expense progress.</p>
+    </div>
+    
+    <div class="header-actions">
+      <!-- Month Selector -->
+      <div class="month-selector-wrapper">
+        <label for="month-select" class="sr-only">Select Month</label>
+        <input 
+          type="month" 
+          id="month-select" 
+          [(ngModel)]="selectedMonth" 
+          (change)="onMonthChange()" 
+          class="month-input" />
+      </div>
+      
+      <!-- Create Button -->
+      <button class="btn-primary flex-center" (click)="openCreateModal()">
+        <span>+ Create Budget</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages Toast -->
+  <div *ngIf="successMessage" class="toast success animate-slide-in">
+    ✨ {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="toast error animate-slide-in">
+    ⚠️ {{ errorMessage }}
+  </div>
+
+  <!-- Content Grid -->
+  <div class="budget-content-grid" [class.loading-opaque]="isLoading">
+    <!-- Overall Budget Progress Card -->
+    <app-budget-progress 
+      [progressList]="progressList" 
+      [currencySymbol]="currencySymbol">
+    </app-budget-progress>
+
+    <!-- Budget Charts (Spent vs Limit & Expense Breakdown) -->
+    <app-budget-chart 
+      *ngIf="progressList.length > 0"
+      [progressList]="progressList" 
+      [currencySymbol]="currencySymbol">
+    </app-budget-chart>
+
+    <!-- Category Cards List Section -->
+    <div class="budget-list-section">
+      <div class="section-header">
+        <h3>Category Allocations ({{ selectedMonth }})</h3>
+        <span class="count-badge" *ngIf="progressList.length > 0">
+          {{ progressList.length }} {{ progressList.length === 1 ? 'Budget' : 'Budgets' }} Active
+        </span>
+      </div>
+
+      <div class="budgets-grid" *ngIf="progressList.length > 0; else emptyState">
+        <app-budget-card 
+          *ngFor="let item of progressList" 
+          [progress]="item"
+          [currencySymbol]="currencySymbol"
+          (edit)="openEditModal($event)"
+          (delete)="openDeleteModal($event)">
+        </app-budget-card>
+      </div>
+
+      <ng-template #emptyState>
+        <div class="empty-card">
+          <div class="empty-icon">📂</div>
+          <h4>No Category Budgets Set</h4>
+          <p>You haven't planned any budgets for this month. Get started by clicking the "Create Budget" button to control your finances.</p>
+          <button class="btn-primary" style="width: auto; margin-top: 1rem; padding: 0.5rem 1.5rem;" (click)="openCreateModal()">
+            Set First Budget
+          </button>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Form Modal Overlay -->
+  <div class="modal-overlay" *ngIf="showFormModal" (click)="closeFormModal()">
+    <div class="modal-card animate-zoom-in" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeFormModal()" aria-label="Close form">×</button>
+      <app-budget-form 
+        [budgetToEdit]="budgetToEdit"
+        (formSubmit)="onBudgetSubmit($event)"
+        (formCancel)="closeFormModal()">
+      </app-budget-form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal Overlay -->
+  <div class="modal-overlay" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+    <div class="modal-card confirm-modal animate-zoom-in" (click)="$event.stopPropagation()">
+      <div class="confirm-icon">⚠️</div>
+      <h3>Delete Budget Allocation?</h3>
+      <p class="confirm-desc">Are you sure you want to remove this budget? You will no longer track spent ratios for this category unless you recreate it.</p>
+      
+      <div class="confirm-actions">
+        <button class="btn-secondary" (click)="closeDeleteModal()">Cancel</button>
+        <button class="btn-primary btn-danger" (click)="confirmDelete()">Delete Instantly</button>
+      </div>
+    </div>
+  </div>
+</div>
