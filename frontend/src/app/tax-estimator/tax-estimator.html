@@ -1,0 +1,340 @@
+<div class="tax-estimator-container">
+  <!-- Page Header -->
+  <div class="tax-header-row">
+    <div>
+      <h1>Tax Estimator</h1>
+      <p class="text-muted">Calculate your estimated quarterly tax obligations based on income, deductions, and local brackets.</p>
+    </div>
+  </div>
+
+  <!-- Two-Column Grid Layout -->
+  <div class="tax-grid">
+    <!-- Left Column: Inputs Form -->
+    <div class="card tax-form-card">
+      <div class="card-header">
+        <h2 class="card-title"><i class="ph ph-calculator-bold"></i> Quick Estimate Tax Calculator</h2>
+        <p class="card-subtitle">Provide details for the current fiscal quarter</p>
+      </div>
+
+      <form [formGroup]="taxForm" (ngSubmit)="calculateEstimatedTax()" class="tax-form">
+        <!-- Country & State Row -->
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="country">Country/Region</label>
+            <select id="country" formControlName="country">
+              <option value="US">United States</option>
+              <option value="CA">Canada</option>
+              <option value="UK">United Kingdom</option>
+              <option value="AU">Australia</option>
+              <option value="IN">India</option>
+            </select>
+          </div>
+
+          <div class="form-group flex-1" *ngIf="hasStates">
+            <label for="state">State/Province/Region</label>
+            <select id="state" formControlName="state">
+              <option *ngFor="let opt of availableStates" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filing Status & Quarter Row -->
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="filingStatus">Filing Status</label>
+            <select id="filingStatus" formControlName="filingStatus">
+              <option value="Single">Single</option>
+              <option value="Married">Married (Jointly)</option>
+              <option value="Married Separately">Married (Separately)</option>
+              <option value="Head of Household">Head of Household</option>
+            </select>
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="quarter">Quarter</label>
+            <select id="quarter" formControlName="quarter">
+              <option value="Q1">Q1 (Jan-Mar 2026)</option>
+              <option value="Q2">Q2 (Apr-Jun 2026)</option>
+              <option value="Q3">Q3 (Jul-Sep 2026)</option>
+              <option value="Q4">Q4 (Oct-Dec 2026)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="divider">Income Details</div>
+
+        <!-- Gross Income Input -->
+        <div class="form-group">
+          <label for="grossIncome">Gross Income for Quarter</label>
+          <div class="input-prefix-container">
+            <span class="currency-prefix">{{ currencySymbol }}</span>
+            <input 
+              type="number" 
+              id="grossIncome" 
+              formControlName="grossIncome" 
+              placeholder="e.g. 80000"
+              [ngClass]="{ 'is-invalid': taxForm.get('grossIncome')?.invalid && taxForm.get('grossIncome')?.touched }"
+            >
+          </div>
+          <div class="error-text" *ngIf="taxForm.get('grossIncome')?.invalid && taxForm.get('grossIncome')?.touched">
+            Gross Income is required and must be 0 or greater.
+          </div>
+        </div>
+
+        <div class="divider">Deductions & Expenses</div>
+
+        <!-- Deductions/Expenses Inputs Grid -->
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="expenses">Business Expenses</label>
+            <div class="input-prefix-container">
+              <span class="currency-prefix">{{ currencySymbol }}</span>
+              <input type="number" id="expenses" formControlName="expenses" placeholder="0">
+            </div>
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="retirement">Retirement Contributions</label>
+            <div class="input-prefix-container">
+              <span class="currency-prefix">{{ currencySymbol }}</span>
+              <input type="number" id="retirement" formControlName="retirement" placeholder="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="healthInsurance">Health Insurance Premiums</label>
+            <div class="input-prefix-container">
+              <span class="currency-prefix">{{ currencySymbol }}</span>
+              <input type="number" id="healthInsurance" formControlName="healthInsurance" placeholder="0">
+            </div>
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="homeOffice">Home Office Deduction</label>
+            <div class="input-prefix-container">
+              <span class="currency-prefix">{{ currencySymbol }}</span>
+              <input type="number" id="homeOffice" formControlName="homeOffice" placeholder="0">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary calculate-btn">
+          <i class="ph ph-cpu"></i> Calculate Estimated Tax
+        </button>
+      </form>
+    </div>
+
+    <!-- Right Column: Summary -->
+    <div class="results-column">
+      <!-- Tax Summary Card -->
+      <div class="card summary-card">
+        <div class="card-header">
+          <h2 class="card-title"><i class="ph ph-receipt-bold"></i> Tax Summary</h2>
+          <p class="card-subtitle">Estimated tax calculations & breakdown</p>
+        </div>
+
+        <!-- Initial Placeholder State -->
+        <div class="placeholder-state" *ngIf="!isCalculated">
+          <i class="ph ph-trend-up placeholder-icon"></i>
+          <p class="placeholder-text">Enter your income and deduction details to calculate your estimated quarterly tax.</p>
+        </div>
+
+        <!-- Calculated Summary State -->
+        <div class="summary-details" *ngIf="isCalculated">
+          <div class="highlight-box">
+            <div class="highlight-label">ESTIMATED QUARTERLY TAX DUE</div>
+            <div class="highlight-value">{{ currencySymbol }}{{ summaryEstimatedTax | number:'1.2-2' }}</div>
+            <div class="highlight-meta">For {{ calculatedQuarter }}</div>
+          </div>
+
+          <div class="breakdown-list">
+            <div class="breakdown-item">
+              <span class="item-label">Gross Income</span>
+              <span class="item-value">{{ currencySymbol }}{{ summaryGrossIncome | number:'1.2-2' }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="item-label">Total Deductions</span>
+              <span class="item-value text-success">- {{ currencySymbol }}{{ summaryTotalDeductions | number:'1.2-2' }}</span>
+            </div>
+            <div class="breakdown-item bold border-top">
+              <span class="item-label">Taxable Income</span>
+              <span class="item-value">{{ currencySymbol }}{{ summaryTaxableIncome | number:'1.2-2' }}</span>
+            </div>
+            <div class="breakdown-item">
+              <span class="item-label">Federal/National Tax</span>
+              <span class="item-value">{{ currencySymbol }}{{ summaryFederalTax | number:'1.2-2' }}</span>
+            </div>
+            <div class="breakdown-item" *ngIf="summaryStateTax > 0">
+              <span class="item-label">State/Provincial Tax</span>
+              <span class="item-value">{{ currencySymbol }}{{ summaryStateTax | number:'1.2-2' }}</span>
+            </div>
+            <div class="breakdown-item bold border-top">
+              <span class="item-label">Effective Tax Rate</span>
+              <span class="item-value">{{ summaryEffectiveRate | number:'1.1-2' }}%</span>
+            </div>
+            <div class="breakdown-item highlight-due">
+              <span class="item-label"><i class="ph ph-calendar-blank"></i> Due Date</span>
+              <span class="item-value">{{ dueDate }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saved Calculation History Card -->
+      <div class="card summary-card" style="margin-top: 1.5rem;" *ngIf="history.length > 0">
+        <div class="card-header">
+          <h2 class="card-title"><i class="ph ph-clock-history-bold"></i> Saved History</h2>
+          <p class="card-subtitle">Previous quarterly evaluations</p>
+        </div>
+        <div class="history-list" style="margin-top: 1rem; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+          <div 
+            *ngFor="let item of history" 
+            style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-main);"
+          >
+            <div style="cursor: pointer; flex-grow: 1;" (click)="loadHistoryItem(item)">
+              <div style="font-weight: 600; font-size: 0.9rem;">
+                {{ item.quarter }} {{ item.year }} – {{ getCountryName(item.country) }}<span *ngIf="item.state"> ({{ item.state }})</span>
+              </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem;">
+                Tax Due: <strong>{{ getItemCurrencySymbol(item.country) }}{{ item.estimatedTax | number:'1.2-2' }}</strong> (Gross: {{ getItemCurrencySymbol(item.country) }}{{ item.grossIncomeForQuarter | number:'1.0-0' }})
+              </div>
+            </div>
+            <button 
+              type="button" 
+              (click)="deleteHistoryItem(item.id, $event)" 
+              style="background: transparent; border: none; font-size: 1.1rem; cursor: pointer; padding: 0.25rem; display: flex; align-items: center;"
+              title="Delete Estimate"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tax Calendar Section -->
+  <div class="card tax-calendar-card" style="margin-top: 2rem;">
+    <div class="card-header">
+      <h2 class="card-title"><i class="ph ph-calendar-bold"></i> Tax Calendar</h2>
+      <p class="card-subtitle">Quarterly tax payment deadlines & reminders</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="placeholder-state" *ngIf="alertGroups.length === 0" style="padding: 4rem 2rem; min-height: 250px;">
+      <i class="ph ph-calendar-blank placeholder-icon" style="font-size: 2.5rem; margin-bottom: 0.75rem;"></i>
+      <p class="placeholder-text" style="max-width: 320px;">No tax alerts scheduled yet. Save a quarterly tax estimate calculation to generate automated reminders.</p>
+    </div>
+
+    <!-- Calendar Alerts List -->
+    <div class="calendar-timeline" *ngIf="alertGroups.length > 0">
+      <div class="timeline-month-group" *ngFor="let group of alertGroups">
+        <h3 class="timeline-month-title">{{ group.monthYear }}</h3>
+        
+        <div class="timeline-alerts-list">
+          <div 
+            class="calendar-alert-card" 
+            *ngFor="let alert of group.alerts"
+            [ngClass]="{ 
+              'alert-reminder': alert.type === 'reminder', 
+              'alert-payment': alert.type === 'payment',
+              'alert-read': alert.isRead,
+              'alert-paid': alert.isPaymentDone
+            }"
+          >
+            <div class="alert-card-left">
+              <span 
+                class="alert-type-badge" 
+                [ngClass]="{ 
+                  'badge-reminder': alert.type === 'reminder' && !alert.isRead,
+                  'badge-payment': alert.type === 'payment' && !alert.isPaymentDone,
+                  'badge-read': alert.isRead,
+                  'badge-paid': alert.isPaymentDone
+                }"
+              >
+                <ng-container *ngIf="alert.type === 'reminder' && !alert.isRead">reminder</ng-container>
+                <ng-container *ngIf="alert.type === 'payment' && !alert.isPaymentDone">payment</ng-container>
+                <ng-container *ngIf="alert.isRead">read</ng-container>
+                <ng-container *ngIf="alert.isPaymentDone">paid</ng-container>
+              </span>
+              
+              <div class="alert-details">
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                  <h4 class="alert-title">{{ alert.title }}</h4>
+                  <span 
+                    class="status-pill" 
+                    [ngClass]="{ 
+                      'status-overdue': alert.status === 'Overdue',
+                      'status-duesoon': alert.status === 'Due Soon',
+                      'status-upcoming': alert.status === 'Upcoming'
+                    }"
+                  >
+                    {{ alert.status }}
+                  </span>
+                </div>
+                <div class="alert-date-row">
+                  <i class="ph ph-calendar-blank"></i> {{ alert.dateStr }}
+                </div>
+                <p class="alert-description">{{ alert.description }}</p>
+              </div>
+            </div>
+            
+            <div class="alert-card-actions">
+              <!-- Action Button for Reminder -->
+              <button 
+                type="button" 
+                *ngIf="alert.type === 'reminder' && !alert.isRead"
+                class="btn-action-read"
+                (click)="markAsRead(alert.id, $event)"
+              >
+                <i class="ph ph-check"></i> Mark as read
+              </button>
+              
+              <!-- Checkmark for Read Reminder with Undo -->
+              <div *ngIf="alert.type === 'reminder' && alert.isRead" class="status-indicator-read-container">
+                <span class="status-indicator-read">
+                  <i class="ph ph-checks"></i> Read
+                </span>
+                <button 
+                  type="button" 
+                  class="btn-undo"
+                  (click)="markAsUnread(alert.id, $event)"
+                  title="Mark as unread"
+                >
+                  <i class="ph ph-arrow-u-up-left"></i> Undo
+                </button>
+              </div>
+
+              <!-- Action Button for Payment Alert -->
+              <button 
+                type="button" 
+                *ngIf="alert.type === 'payment' && !alert.isPaymentDone"
+                class="btn-action-paid"
+                (click)="markAsPaid(alert.id, $event)"
+              >
+                <i class="ph ph-coins"></i> Mark as payment done
+              </button>
+              
+              <!-- Checkmark for Paid Alert with Undo -->
+              <div *ngIf="alert.type === 'payment' && alert.isPaymentDone" class="status-indicator-paid-container">
+                <span class="status-indicator-paid">
+                  <i class="ph ph-check-circle"></i> Paid
+                </span>
+                <button 
+                  type="button" 
+                  class="btn-undo btn-undo-paid"
+                  (click)="markAsUnpaid(alert.id, $event)"
+                  title="Mark as unpaid"
+                >
+                  <i class="ph ph-arrow-u-up-left"></i> Undo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -21,6 +21,15 @@
     </div>
   </div>
 
+  <!-- Success Notification Alert -->
+  <div class="alert success" *ngIf="successMessage">
+    <span style="display: flex; align-items: center; gap: 0.5rem;">
+      <i class="ph ph-check-circle" style="font-size: 1.25rem;"></i>
+      {{ successMessage }}
+    </span>
+    <button type="button" (click)="successMessage = ''" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: inherit; line-height: 1;" aria-label="Dismiss">&times;</button>
+  </div>
+
   <!-- Summary Cards -->
   <div class="budget-summary-grid">
     <div class="card summary-card">

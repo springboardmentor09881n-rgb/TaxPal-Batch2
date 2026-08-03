@@ -26,6 +26,7 @@ export class BudgetPage implements OnInit {
   editingBudgetId: string | null = null;
   budgetForm!: FormGroup;
   formError = '';
+  successMessage = '';
 
   // Suggestions state
   showSuggestions = false;
@@ -44,11 +45,11 @@ export class BudgetPage implements OnInit {
     private categoryService: CategoryService,
     private transactionService: TransactionService,
     private authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.currencySymbol = this.authService.getCurrencySymbol();
-    
+
     // Set default month to current month in local timezone (YYYY-MM)
     const now = new Date();
     const year = now.getFullYear();
@@ -170,6 +171,16 @@ export class BudgetPage implements OnInit {
       this.budgetService.updateBudget(this.editingBudgetId, formVal).subscribe({
         next: () => {
           this.closeModal();
+          if (formVal.month && formVal.month !== this.selectedMonth) {
+            this.selectedMonth = formVal.month;
+          }
+          this.loadBudgetsAndProgress();
+          this.successMessage = 'Budget updated successfully!';
+          setTimeout(() => {
+            if (this.successMessage === 'Budget updated successfully!') {
+              this.successMessage = '';
+            }
+          }, 5000);
         },
         error: (err) => {
           this.formError = err.message || 'Failed to update budget.';
@@ -179,6 +190,16 @@ export class BudgetPage implements OnInit {
       this.budgetService.createBudget(formVal).subscribe({
         next: () => {
           this.closeModal();
+          if (formVal.month && formVal.month !== this.selectedMonth) {
+            this.selectedMonth = formVal.month;
+          }
+          this.loadBudgetsAndProgress();
+          this.successMessage = 'Budget created successfully!';
+          setTimeout(() => {
+            if (this.successMessage === 'Budget created successfully!') {
+              this.successMessage = '';
+            }
+          }, 5000);
         },
         error: (err) => {
           this.formError = err.message || 'Failed to create budget.';
@@ -189,7 +210,20 @@ export class BudgetPage implements OnInit {
 
   deleteBudget(id: string, category: string): void {
     if (confirm(`Are you sure you want to delete the budget for category "${category}"?`)) {
-      this.budgetService.deleteBudget(id).subscribe();
+      this.budgetService.deleteBudget(id).subscribe({
+        next: () => {
+          this.loadBudgetsAndProgress();
+          this.successMessage = 'Budget deleted successfully!';
+          setTimeout(() => {
+            if (this.successMessage === 'Budget deleted successfully!') {
+              this.successMessage = '';
+            }
+          }, 5000);
+        },
+        error: (err) => {
+          console.error('Error deleting budget', err);
+        }
+      });
     }
   }
 
@@ -203,7 +237,7 @@ export class BudgetPage implements OnInit {
     if (!inputVal) {
       this.filteredCategories = this.expenseCategories;
     } else {
-      this.filteredCategories = this.expenseCategories.filter(c => 
+      this.filteredCategories = this.expenseCategories.filter(c =>
         c.toLowerCase().includes(inputVal.toLowerCase())
       );
     }
@@ -211,7 +245,7 @@ export class BudgetPage implements OnInit {
 
   onCategoryInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
-    this.filteredCategories = this.expenseCategories.filter(c => 
+    this.filteredCategories = this.expenseCategories.filter(c =>
       c.toLowerCase().includes(value.toLowerCase())
     );
     this.showSuggestions = true;
