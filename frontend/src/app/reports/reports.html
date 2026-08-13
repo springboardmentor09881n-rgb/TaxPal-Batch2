@@ -1,0 +1,118 @@
+<div class="reports-stacked-container">
+  
+  <!-- Page Header -->
+  <div class="reports-page-header">
+    <h1>Financial Reports</h1>
+    <p>Generate and download your financial reports.</p>
+  </div>
+
+  <!-- 1. Generate Report Card (Horizontal Form) -->
+  <div class="card form-card-horizontal">
+    <div class="card-header-simple">
+      <h2>Generate Report</h2>
+    </div>
+
+    <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="horizontal-form">
+      <div class="form-inputs-row">
+        <div class="form-group select-group">
+          <label for="reportType">Report Type</label>
+          <select id="reportType" formControlName="reportType">
+            <option value="income_statement">Income Statement</option>
+            <option value="tax_summary">Tax Summary</option>
+            <option value="budget_performance">Budget Performance</option>
+          </select>
+        </div>
+
+        <div class="form-group select-group">
+          <label for="period">Period</label>
+          <select id="period" formControlName="period">
+            <option *ngIf="shouldShowPeriodOption('current_month')" value="current_month">Current Month</option>
+            <option *ngIf="shouldShowPeriodOption('last_month')" value="last_month">Last Month</option>
+            <option value="q1">Quarter 1 (2026-Q1)</option>
+            <option value="q2">Quarter 2 (2026-Q2)</option>
+            <option value="q3">Quarter 3 (2026-Q3)</option>
+            <option value="q4">Quarter 4 (2026-Q4)</option>
+            <option *ngIf="shouldShowPeriodOption('current_year')" value="current_year">Current Year (2026)</option>
+          </select>
+        </div>
+
+        <div class="form-group select-group">
+          <label for="format">Format</label>
+          <select id="format" formControlName="format">
+            <option value="PDF">PDF</option>
+            <option value="CSV">CSV</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-actions-row-simple">
+        <button type="button" (click)="onReset()" class="btn-reset-simple">Reset</button>
+        <button type="submit" class="btn-generate-simple">Generate Report</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 2. Recent Reports Card -->
+  <div class="card table-card-full">
+    <div class="card-header-simple">
+      <h2>Recent Reports</h2>
+    </div>
+
+    <div class="table-responsive">
+      <table class="recent-reports-table-simple">
+        <thead>
+          <tr>
+            <th>Report Name</th>
+            <th>Generated</th>
+            <th>Period</th>
+            <th>Format</th>
+            <th style="width: 120px; text-align: center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let report of reports" 
+              [class.active-row-simple]="selectedReport?.id === report.id"
+              class="clickable-row-simple">
+            <td>
+              <div class="report-title-cell">
+                <i class="ph" [ngClass]="{
+                  'ph-file-text': report.type === 'income_statement',
+                  'ph-receipt': report.type === 'tax_summary',
+                  'ph-wallet': report.type === 'budget_performance'
+                }"></i>
+                <span>{{ report.name }}</span>
+              </div>
+            </td>
+            <td><span class="timestamp-text-simple">{{ report.generatedDate }}</span></td>
+            <td><span class="period-text-simple">{{ report.periodLabel }}</span></td>
+            <td>
+              <span class="format-badge-simple" [ngClass]="{
+                'badge-pdf': report.format === 'PDF',
+                'badge-csv': report.format === 'CSV'
+              }">{{ report.format }}</span>
+            </td>
+            <td>
+              <div class="actions-wrapper-simple">
+                <button type="button" class="btn-action-simple" (click)="onPreview(report); $event.stopPropagation();" title="Preview">
+                  <i class="ph ph-eye"></i>
+                </button>
+                <button type="button" class="btn-action-simple" (click)="onDownload(report); $event.stopPropagation();" title="Download">
+                  <i class="ph ph-download-simple"></i>
+                </button>
+                <button type="button" class="btn-action-simple btn-delete" (click)="onDelete(report, $event)" title="Delete">
+                  <i class="ph ph-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="reports.length === 0">
+            <td colspan="5" class="empty-table-row">
+              No results
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

@@ -276,6 +276,9 @@
                 </div>
                 <div class="alert-date-row">
                   <i class="ph ph-calendar-blank"></i> {{ alert.dateStr }}
+                  <span class="days-remaining-label" style="margin-left: 0.5rem; font-weight: 600; color: var(--primary-color);" *ngIf="alert.daysRemaining !== undefined">
+                    ({{ alert.daysRemaining > 0 ? alert.daysRemaining + ' days remaining' : (alert.daysRemaining === 0 ? 'Due today' : 'Overdue by ' + (-alert.daysRemaining) + ' days') }})
+                  </span>
                 </div>
                 <p class="alert-description">{{ alert.description }}</p>
               </div>
@@ -287,7 +290,7 @@
                 type="button" 
                 *ngIf="alert.type === 'reminder' && !alert.isRead"
                 class="btn-action-read"
-                (click)="markAsRead(alert.id, $event)"
+                (click)="markAsRead(alert.estimateId, $event)"
               >
                 <i class="ph ph-check"></i> Mark as read
               </button>
@@ -300,19 +303,30 @@
                 <button 
                   type="button" 
                   class="btn-undo"
-                  (click)="markAsUnread(alert.id, $event)"
+                  (click)="markAsUnread(alert.estimateId, $event)"
                   title="Mark as unread"
                 >
                   <i class="ph ph-arrow-u-up-left"></i> Undo
                 </button>
               </div>
 
-              <!-- Action Button for Payment Alert -->
+              <!-- Action Button for Payment Alert: Show reminder (when reminder is hidden) -->
+              <button 
+                type="button" 
+                *ngIf="alert.type === 'payment' && alert.isReminderHidden && !alert.isPaymentDone"
+                class="btn-action-read"
+                style="margin-right: 0.5rem;"
+                (click)="showReminder(alert.estimateId, $event)"
+              >
+                <i class="ph ph-eye"></i> Show reminder ({{ alert.daysRemaining }} days remaining)
+              </button>
+
+              <!-- Action Button for Payment Alert: Mark as payment done -->
               <button 
                 type="button" 
                 *ngIf="alert.type === 'payment' && !alert.isPaymentDone"
                 class="btn-action-paid"
-                (click)="markAsPaid(alert.id, $event)"
+                (click)="markAsPaid(alert.estimateId, $event)"
               >
                 <i class="ph ph-coins"></i> Mark as payment done
               </button>
@@ -325,7 +339,7 @@
                 <button 
                   type="button" 
                   class="btn-undo btn-undo-paid"
-                  (click)="markAsUnpaid(alert.id, $event)"
+                  (click)="markAsUnpaid(alert.estimateId, $event)"
                   title="Mark as unpaid"
                 >
                   <i class="ph ph-arrow-u-up-left"></i> Undo

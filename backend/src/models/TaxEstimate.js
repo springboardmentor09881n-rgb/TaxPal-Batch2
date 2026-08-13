@@ -7,21 +7,68 @@ const taxEstimateSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    country: { type: String, required: true },
-    state: { type: String, default: "" },
-    quarter: { type: String, enum: ["Q1", "Q2", "Q3", "Q4"], required: true },
-    filingStatus: { type: String, default: "" },
-    grossIncome: { type: Number, required: true },
-    deductions: {
-      businessExpenses: { type: Number, default: 0 },
-      retirementContribution: { type: Number, default: 0 },
-      healthInsurancePremiums: { type: Number, default: 0 },
-      homeOfficeDeduction: { type: Number, default: 0 },
+    country: {
+      type: String,
+      default: "IN",
     },
-    estimatedTax: { type: Number, required: true },
-    dueDate: { type: Date, required: true },
+    state: {
+      type: String,
+      default: "",
+    },
+    filingStatus: {
+      type: String,
+      default: "Single",
+    },
+    quarter: {
+      type: String,
+      enum: ["Q1", "Q2", "Q3", "Q4"],
+      required: true,
+    },
+    year: {
+      type: Number,
+      default: new Date().getFullYear(),
+    },
+    grossIncomeForQuarter: {
+      type: Number,
+      default: 0,
+    },
+    grossIncome: {
+      type: Number,
+      default: 0,
+    },
+    deductions: {
+      type: Number,
+      default: 0,
+    },
+    businessExpenses: { type: Number, default: 0 },
+    retirementContribution: { type: Number, default: 0 },
+    healthInsurancePremiums: { type: Number, default: 0 },
+    homeOfficeDeduction: { type: Number, default: 0 },
+    totalDeductions: { type: Number, default: 0 },
+    taxableIncome: { type: Number, default: 0 },
+    nationalTax: { type: Number, default: 0 },
+    stateTax: { type: Number, default: 0 },
+    estimatedTax: { type: Number, default: 0 },
+    effectiveTaxRate: { type: Number, default: 0 },
+    dueDate: {
+      type: Date,
+      default: Date.now,
+    },
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["Pending", "Completed"],
+      default: "Pending",
+    },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  }
 );
+
+taxEstimateSchema.index({ userId: 1, quarter: 1, year: 1 });
 
 module.exports = mongoose.model("TaxEstimate", taxEstimateSchema);

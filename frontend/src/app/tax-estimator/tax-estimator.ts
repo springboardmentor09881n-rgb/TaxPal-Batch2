@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../core/services/auth';
 import { TaxEstimateService, TaxEstimateResult } from '../core/services/tax-estimate';
+import { TaxCalendarService, TaxCalendarReminder } from '../core/services/tax-calendar.service';
 
 interface StateOption {
   value: string;
@@ -37,6 +38,7 @@ export interface CalendarAlert {
   daysRemaining?: number;
   status?: string;
   dueDateForCalculation: string | Date;
+  isReminderHidden?: boolean;
 }
 
 export interface AlertGroup {
@@ -58,6 +60,8 @@ export class TaxEstimator implements OnInit {
   hasStates = true;
   history: TaxEstimateResult[] = [];
   alertGroups: AlertGroup[] = [];
+  reminders: TaxCalendarReminder[] = [];
+  explicitShowReminders: { [key: string]: boolean } = {};
 
   // Calculation Results
   isCalculated = false;
@@ -387,6 +391,7 @@ export class TaxEstimator implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private taxEstimateService: TaxEstimateService,
+    private taxCalendarService: TaxCalendarService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -397,6 +402,7 @@ export class TaxEstimator implements OnInit {
 
     this.initForm(defaultCountry);
     this.loadHistory();
+    this.loadCalendar();
   }
 
   private initForm(defaultCountry: string): void {
@@ -513,6 +519,7 @@ export class TaxEstimator implements OnInit {
           this.cdr.detectChanges();
           
           this.loadHistory();
+          this.loadCalendar();
         }
       },
       error: (err) => {
@@ -572,11 +579,23 @@ export class TaxEstimator implements OnInit {
     this.taxEstimateService.getEstimates().subscribe({
       next: (data) => {
         this.history = data;
-        this.generateAlerts();
         this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading estimates history:', err);
+      }
+    });
+  }
+
+  loadCalendar(): void {
+    this.taxCalendarService.getReminders().subscribe({
+      next: (data) => {
+        this.reminders = data;
+        this.generateAlerts();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error loading calendar reminders:', err);
       }
     });
   }
@@ -617,6 +636,7 @@ export class TaxEstimator implements OnInit {
         next: (success) => {
           if (success) {
             this.loadHistory();
+            this.loadCalendar();
             this.isCalculated = false;
             this.cdr.detectChanges();
           }
@@ -660,39 +680,10 @@ export class TaxEstimator implements OnInit {
     return `${monthsFull[date.getMonth()]} ${date.getFullYear()}`;
   }
 
-  private getStorageKey(): string {
-    const user = this.authService.currentUser;
-    const userId = user ? user.id || user.email || 'guest' : 'guest';
-    return `taxpal_alerts_state_${userId}`;
-  }
-
-  getAlertsState(): { readAlertIds: string[]; paidAlertIds: string[] } {
-    const key = this.getStorageKey();
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        return {
-          readAlertIds: Array.isArray(parsed.readAlertIds) ? parsed.readAlertIds : [],
-          paidAlertIds: Array.isArray(parsed.paidAlertIds) ? parsed.paidAlertIds : []
-        };
-      } catch (e) {
-        console.error('Failed to parse alerts state from localStorage:', e);
-      }
-    }
-    return { readAlertIds: [], paidAlertIds: [] };
-  }
-
-  saveAlertsState(state: { readAlertIds: string[]; paidAlertIds: string[] }): void {
-    const key = this.getStorageKey();
-    localStorage.setItem(key, JSON.stringify(state));
-  }
-
   generateAlerts(): void {
-    const state = this.getAlertsState();
     const list: CalendarAlert[] = [];
 
-    for (const item of this.history) {
+    for (const item of this.reminders) {
       if (!item.id) continue;
       const dueDateObj = item.dueDate ? new Date(item.dueDate) : null;
       if (!dueDateObj || isNaN(dueDateObj.getTime())) continue;
@@ -702,31 +693,41 @@ export class TaxEstimator implements OnInit {
       const reminderId = `${item.id}_reminder`;
       const paymentId = `${item.id}_payment`;
 
-      const isRead = state.readAlertIds.includes(reminderId);
-      const isPaymentDone = state.paidAlertIds.includes(paymentId);
+      const isRead = item.isRead;
+      const isPaymentDone = item.paymentStatus === 'Completed';
       const currencySymbol = this.getItemCurrencySymbol(item.country);
 
       // Dynamic calculation using the new utility functions
       const daysRemaining = this.calculateDaysRemaining(dueDateObj);
       const status = this.getReminderStatus(daysRemaining);
 
+      const today = new Date();
+      const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const reminderDateDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
+      
+      const isReminderReached = todayDateOnly >= reminderDateDateOnly;
+      const forceShowReminder = !!this.explicitShowReminders[item.id];
+      const showReminder = isReminderReached || forceShowReminder;
+
       // 1. Reminder Alert
-      list.push({
-        id: reminderId,
-        estimateId: item.id,
-        type: 'reminder',
-        title: `Reminder: ${item.quarter} Estimated Tax Payment`,
-        date: reminderDate,
-        dateStr: this.formatShortDate(reminderDate),
-        monthYearStr: this.formatMonthYear(reminderDate),
-        description: `Reminder for upcoming ${item.quarter} estimated tax payment due on ${this.formatDueDate(item.dueDate)}`,
-        isRead,
-        estimatedTax: item.estimatedTax,
-        currencySymbol,
-        daysRemaining,
-        status,
-        dueDateForCalculation: dueDateObj
-      });
+      if (showReminder) {
+        list.push({
+          id: reminderId,
+          estimateId: item.id,
+          type: 'reminder',
+          title: `Reminder: ${item.quarter} Estimated Tax Payment`,
+          date: reminderDate,
+          dateStr: this.formatShortDate(reminderDate),
+          monthYearStr: this.formatMonthYear(reminderDate),
+          description: `Reminder for upcoming ${item.quarter} estimated tax payment due on ${this.formatDueDate(item.dueDate)}`,
+          isRead,
+          estimatedTax: item.estimatedTax,
+          currencySymbol,
+          daysRemaining,
+          status,
+          dueDateForCalculation: dueDateObj
+        });
+      }
 
       // 2. Due Payment Alert
       list.push({
@@ -743,7 +744,8 @@ export class TaxEstimator implements OnInit {
         currencySymbol,
         daysRemaining,
         status,
-        dueDateForCalculation: dueDateObj
+        dueDateForCalculation: dueDateObj,
+        isReminderHidden: !showReminder
       });
     }
 
@@ -765,50 +767,50 @@ export class TaxEstimator implements OnInit {
     }));
   }
 
-  markAsRead(alertId: string, event: Event): void {
+  markAsRead(estimateId: string, event: Event): void {
     event.stopPropagation();
-    const state = this.getAlertsState();
-    if (!state.readAlertIds.includes(alertId)) {
-      state.readAlertIds.push(alertId);
-      this.saveAlertsState(state);
-      this.generateAlerts();
-      this.cdr.detectChanges();
-    }
+    this.taxCalendarService.markReminderRead(estimateId).subscribe({
+      next: () => {
+        this.loadCalendar();
+      },
+      error: (err) => console.error('Error marking reminder as read:', err)
+    });
   }
 
-  markAsPaid(alertId: string, event: Event): void {
+  markAsPaid(estimateId: string, event: Event): void {
     event.stopPropagation();
-    const state = this.getAlertsState();
-    if (!state.paidAlertIds.includes(alertId)) {
-      state.paidAlertIds.push(alertId);
-      this.saveAlertsState(state);
-      this.generateAlerts();
-      this.cdr.detectChanges();
-    }
+    this.taxCalendarService.markPaymentDone(estimateId).subscribe({
+      next: () => {
+        this.loadCalendar();
+      },
+      error: (err) => console.error('Error marking payment as completed:', err)
+    });
   }
 
-  markAsUnread(alertId: string, event: Event): void {
+  markAsUnread(estimateId: string, event: Event): void {
     event.stopPropagation();
-    const state = this.getAlertsState();
-    const index = state.readAlertIds.indexOf(alertId);
-    if (index > -1) {
-      state.readAlertIds.splice(index, 1);
-      this.saveAlertsState(state);
-      this.generateAlerts();
-      this.cdr.detectChanges();
-    }
+    this.taxCalendarService.undoMarkAsRead(estimateId).subscribe({
+      next: () => {
+        this.loadCalendar();
+      },
+      error: (err) => console.error('Error undoing reminder read status:', err)
+    });
   }
 
-  markAsUnpaid(alertId: string, event: Event): void {
+  markAsUnpaid(estimateId: string, event: Event): void {
     event.stopPropagation();
-    const state = this.getAlertsState();
-    const index = state.paidAlertIds.indexOf(alertId);
-    if (index > -1) {
-      state.paidAlertIds.splice(index, 1);
-      this.saveAlertsState(state);
-      this.generateAlerts();
-      this.cdr.detectChanges();
-    }
+    this.taxCalendarService.undoPaymentDone(estimateId).subscribe({
+      next: () => {
+        this.loadCalendar();
+      },
+      error: (err) => console.error('Error undoing payment status:', err)
+    });
+  }
+
+  showReminder(estimateId: string, event: Event): void {
+    event.stopPropagation();
+    this.explicitShowReminders[estimateId] = true;
+    this.generateAlerts();
   }
 
   // User-provided utility functions implemented in Angular frontend
@@ -849,4 +851,3 @@ export class TaxEstimator implements OnInit {
     );
   }
 }
-

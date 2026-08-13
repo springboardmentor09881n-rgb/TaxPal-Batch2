@@ -40,100 +40,233 @@ Currently, the application relies on **Mock Services** located in `src/app/core/
 
 ---
 
-## 🔗 Backend & Database Integration Guide (Milestone 1)
+## 🔗 Backend & Database Integration Guide (Tax Estimate Module)
 
-This section is dedicated to the **Backend (Node.js/Express)** and **Database (SQL/NoSQL)** teams. The frontend is currently operating in isolation. Follow these steps to wire the two halves together.
+This section outlines how the Backend (Node.js/Express) and Database (MongoDB/Mongoose) teams should integrate the **Tax Estimate Module** implemented in the frontend. Other core flows (Auth, Transactions, and Dashboard summaries) are already fully integrated.
 
-### Step 1: Database Schema Modeling
-Before building APIs, the Database team must prepare tables/collections that exactly match the data contracts the frontend expects.
+### Step 1: Database Model Reference
+The Database team should leverage the active schema in `backend/src/models/TaxEstimate.js` for storing quarterly estimates:
 
-**1. Users Table/Collection**
-```json
-{
-  "id": "UUID / ObjectId",
-  "username": "string",
-  "password": "string (Hashed/Bcrypt)",
-  "fullName": "string",
-  "email": "string (Unique)",
-  "country": "string (e.g. IN, US, UK)"
-}
+```javascript
+const taxEstimateSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    country: { type: String, required: true },
+    state: { type: String, default: "" },
+    filingStatus: {
+      type: String,
+      enum: ["Single", "Married", "Married Separately", "Head of Household"],
+      required: true,
+    },
+    quarter: {
+      type: String,
+      enum: ["Q1", "Q2", "Q3", "Q4"],
+      required: true,
+    },
+    year: {
+      type: Number,
+      required: true,
+    },
+    grossIncomeForQuarter: {
+      type: Number,
+      required: true,
+      min: [0, "Income cannot be negative"],
+    },
+    businessExpenses: { type: Number, default: 0 },
+    retirementContribution: { type: Number, default: 0 },
+    healthInsurancePremiums: { type: Number, default: 0 },
+    homeOfficeDeduction: { type: Number, default: 0 },
+    totalDeductions: { type: Number, required: true },
+    taxableIncome: { type: Number, required: true },
+    nationalTax: { type: Number, required: true },
+    stateTax: { type: Number, required: true },
+    estimatedTax: { type: Number, required: true },
+    effectiveTaxRate: { type: Number, required: true },
+    dueDate: {
+      type: Date,
+      required: true,
+    },
+  },
+  { timestamps: true },
+);
 ```
 
-**2. Transactions Table/Collection**
-```json
-{
-  "id": "UUID / ObjectId",
-  "userId": "UUID / ObjectId (Foreign Key)",
-  "type": "string (strictly 'income' OR 'expense')",
-  "description": "string",
-  "amount": "number",
-  "category": "string",
-  "date": "string (YYYY-MM-DD)",
-  "notes": "string (Optional text)"
-}
-```
+### Step 2: API Endpoints to Expose
+The Backend team needs to create `taxRoutes.js` and register it under `/api/tax` in `app.js`. Implement the following protected routes (requiring the authentication `protect` middleware):
 
-### Step 2: API Endpoint Development
-The Backend team needs to develop the following endpoints that return JSON matching the contracts below.
-
-#### Authentication APIs
-*   **`POST /api/auth/register`**: Accepts User data, inserts into DB, returns JWT.
-*   **`POST /api/auth/login`**: Accepts `{ username, password }`, returns JWT.
-*   **Expected Frontend Response for both**:
+#### 1. `POST /api/tax/estimate`
+Saves/updates a calculated quarterly tax estimate for the authenticated user.
+*   **Request Headers**: `Authorization: Bearer <JWT_TOKEN>`
+*   **Request Payload**:
     ```json
     {
-      "token": "YOUR_JWT_STRING",
-      "user": {
-        "id": "123",
-        "name": "Alex Morgan",
-        "email": "alex@example.com",
-        "country": "IN"
+      "country": "US",
+      "state": "California",
+      "filingStatus": "Single",
+      "quarter": "Q2",
+      "year": 2026,
+      "grossIncomeForQuarter": 80000,
+      "businessExpenses": 20000,
+      "retirementContribution": 5000,
+      "healthInsurancePremiums": 3000,
+      "homeOfficeDeduction": 1500
+    }
+    ```
+*   **Backend Controller Flow**:
+    1. Parse and extract values. Normalize 2-character country/state codes if passed (e.g. `'US'` to `'United States'`, `'CA'` to `'California'`).
+    2. Invoke backend `taxService.getFullTaxSummary(...)` to compute calculations.
+    3. Save or update the `TaxEstimate` collection matching `{ userId, quarter, year }`.
+*   **Response Payload (`201 Created`)**:
+    ```json
+    {
+      "success": true,
+      "message": "Tax estimate saved successfully",
+      "data": {
+        "_id": "60d0fe4f5311236168a109ca",
+        "userId": "603f9a7d9b1d8e123456789b",
+        "country": "United States",
+        "state": "California",
+        "filingStatus": "Single",
+        "quarter": "Q2",
+        "year": 2026,
+        "grossIncomeForQuarter": 80000,
+        "businessExpenses": 20000,
+        "retirementContribution": 5000,
+        "healthInsurancePremiums": 3000,
+        "homeOfficeDeduction": 1500,
+        "totalDeductions": 29500,
+        "taxableIncome": 50500,
+        "nationalTax": 10274,
+        "stateTax": 4696.50,
+        "estimatedTax": 14970.50,
+        "effectiveTaxRate": 18.71,
+        "dueDate": "2026-06-15T00:00:00.000Z"
       }
     }
     ```
 
-#### Transaction APIs
-*   **`POST /api/transactions`**: Accepts a new Transaction object, saves it to the DB with the authenticated user's ID, and returns the saved object.
-*   **`GET /api/transactions`**: Returns an array of Transactions for the authenticated user, sorted by date (newest first).
-
-#### Dashboard API
-*   **`GET /api/dashboard/summary`**: (Optional but Recommended) The frontend currently calculates the dashboard summary locally by fetching all transactions. For better performance, the backend should expose this endpoint to calculate and return the totals via a database aggregation query.
-*   **Expected Frontend Response**:
+#### 2. `GET /api/tax/estimates`
+Retrieves all saved tax estimates for the authenticated user.
+*   **Request Headers**: `Authorization: Bearer <JWT_TOKEN>`
+*   **Response Payload (`200 OK`)**:
     ```json
     {
-      "monthlyIncome": 4200.00,
-      "incomeTrend": 12,
-      "monthlyExpenses": 1800.00,
-      "expenseTrend": 8,
-      "estimatedTaxDue": 450.00,
-      "savingsRate": 57.1,
-      "savingsTrend": 3.2
+      "success": true,
+      "data": [
+        {
+          "_id": "60d0fe4f5311236168a109ca",
+          "userId": "603f9a7d9b1d8e123456789b",
+          "country": "United States",
+          "state": "California",
+          "filingStatus": "Single",
+          "quarter": "Q2",
+          "year": 2026,
+          "grossIncomeForQuarter": 80000,
+          "estimatedTax": 14970.50,
+          "dueDate": "2026-06-15T00:00:00.000Z"
+        }
+      ]
     }
     ```
 
-### Step 3: Swapping Mocks for HTTP Requests (Frontend Updates)
-Once the APIs are deployed locally or to a staging server, a frontend engineer (or the backend engineer running the full stack) simply needs to swap out the mock services.
+---
 
-Inside `src/app/core/services/`:
-1.  Import `HttpClient` from `@angular/common/http`.
-2.  Inject it into the service constructor: `constructor(private http: HttpClient) {}`.
-3.  Replace the mock `return of(...)` logic with actual HTTP calls.
+### Step 3: Tax Calculation Constants (Matching Database)
+The calculations inside the frontend match the backend code (`backend/src/utils/taxSlabs.js` and `backend/src/utils/stateTaxRates.js`):
 
-**Example Transformation (`transaction.ts`):**
+#### 1. National/Federal Slabs (Annualized)
+- **United States (US) - Single / Married Separately / Head of Household**:
+  - Up to $12,400: **10%**
+  - $12,400 – $50,400: **12%**
+  - $50,400 – $105,700: **22%**
+  - $105,700 – $201,775: **24%**
+  - $201,775 – $256,225: **32%**
+  - $256,225 – $640,600: **35%**
+  - Above $640,600: **37%**
+- **United States (US) - Married (Joint)**:
+  - Up to $24,800: **10%**
+  - $24,800 – $100,800: **12%**
+  - $100,800 – $211,400: **22%**
+  - $211,400 – $403,550: **24%**
+  - $403,550 – $512,450: **32%**
+  - $512,450 – $768,700: **35%**
+  - Above $768,700: **37%**
+- **Canada (CA)**:
+  - Up to $58,523: **14%**
+  - $58,523 – $117,045: **20.5%**
+  - $117,045 – $181,440: **26%**
+  - $181,440 – $258,482: **29%**
+  - Above $258,482: **33%**
+- **India (IN)**:
+  - Up to ₹4,00,000: **0%**
+  - ₹4,00,001 – ₹8,00,000: **5%**
+  - ₹8,00,001 – ₹12,00,000: **10%**
+  - ₹12,00,001 – ₹16,00,000: **15%**
+  - ₹16,00,001 – ₹20,00,000: **20%**
+  - ₹20,00,001 – ₹24,00,000: **25%**
+  - Above ₹24,00,000: **30%**
+- **Australia (AU)**:
+  - Up to AU$18,200: **0%**
+  - AU$18,200 – AU$45,000: **15%**
+  - AU$45,000 – AU$135,000: **30%**
+  - AU$135,000 – AU$190,000: **37%**
+  - Above AU$190,000: **45%**
+- **United Kingdom (UK)**:
+  - Up to £12,570: **0%**
+  - £12,570 – £50,270: **20%**
+  - £50,270 – £125,140: **40%**
+  - Above £125,140: **45%**
+
+#### 2. State flat tax rates (Annualized, applied directly)
+- **United States**: California (`9.3%`), New York (`6.85%`), Illinois (`4.95%`), Pennsylvania (`3.07%`), Ohio (`3.5%`), Georgia (`5.49%`), New Jersey (`6.37%`).
+- **Canada**: Ontario (`9.15%`), Quebec (`14.0%`), British Columbia (`7.7%`), Alberta (`10.0%`), Manitoba (`12.75%`), Saskatchewan (`10.5%`), Nova Scotia (`13.79%`), New Brunswick (`14.0%`).
+- **India / UK / Australia**: State tax rates are `0%`.
+
+---
+
+### Step 4: Frontend Service Signature
+During full integration, a `TaxService` can be created to swap the local calculation components for dynamic API integration:
+
 ```typescript
-// BEFORE (Current Mock)
-saveTransaction(transaction: Transaction): Observable<any> {
-  this.transactions.unshift(transaction);
-  return of({ message: 'Success', data: transaction });
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
+export interface TaxEstimateRequest {
+  country: string;
+  state?: string;
+  filingStatus: string;
+  quarter: string;
+  year: number;
+  grossIncomeForQuarter: number;
+  businessExpenses?: number;
+  retirementContribution?: number;
+  healthInsurancePremiums?: number;
+  homeOfficeDeduction?: number;
 }
 
-// AFTER (Real Backend)
-saveTransaction(transaction: Transaction): Observable<any> {
-  return this.http.post<any>('http://localhost:3000/api/transactions', transaction);
+@Injectable({
+  providedIn: 'root'
+})
+export class TaxService {
+  private apiUrl = `${environment.apiUrl}/tax`;
+
+  constructor(private http: HttpClient) {}
+
+  saveEstimate(data: TaxEstimateRequest): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/estimate`, data);
+  }
+
+  getEstimates(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/estimates`);
+  }
 }
 ```
-
-Because the Angular components are already `subscribe()`-ing to these functions, **absolutely zero changes are required in the UI components.**
 
 ---
 

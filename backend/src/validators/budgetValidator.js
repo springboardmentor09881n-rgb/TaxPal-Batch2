@@ -18,7 +18,27 @@ const validate = (req, res, next) => {
   next();
 };
 
+const validateBudget = (req, res, next) => {
+  const { category, limit, amount, month } = req.body;
+  const targetLimit = limit !== undefined ? limit : amount;
+
+  if (!category || targetLimit === undefined || !month) {
+    return res.status(400).json({
+      message: "Category, limit, and month are required.",
+    });
+  }
+
+  if (targetLimit <= 0) {
+    return res.status(400).json({
+      message: "Limit must be greater than 0.",
+    });
+  }
+
+  next();
+};
+
 module.exports = {
   budgetValidation,
+  validateBudget,
   validate
 };

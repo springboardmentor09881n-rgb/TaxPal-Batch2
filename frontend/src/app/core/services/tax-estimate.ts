@@ -109,7 +109,8 @@ export class TaxEstimateService {
   }
 
   // Frontend format -> Backend format translation
-  private translateToBackend(input: TaxEstimateInput): any {
+  // Made public so TaxCalendarService can reuse this translation logic
+  public translateToBackend(input: TaxEstimateInput): any {
     const countryName = this.countryMap[input.country] || input.country;
     const stateMap = this.stateMaps[input.country] || {};
     const stateName = stateMap[input.state] || input.state;
@@ -137,7 +138,8 @@ export class TaxEstimateService {
   }
 
   // Backend format -> Frontend format translation
-  private translateToFrontend(backendObj: any): TaxEstimateResult {
+  // Made public so TaxCalendarService can reuse this translation logic
+  public translateToFrontend(backendObj: any): TaxEstimateResult {
     const countryCode = this.reverseCountryMap[backendObj.country] || backendObj.country;
     const reverseStateMap = this.reverseStateMaps[countryCode] || {};
     const stateCode = reverseStateMap[backendObj.state] || backendObj.state;

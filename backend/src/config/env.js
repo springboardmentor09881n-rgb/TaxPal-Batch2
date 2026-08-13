@@ -1,6 +1,3 @@
-require("dotenv").config();
-
-module.exports = {
-  PORT: process.env.PORT || 5000,
-  MONGO_URI: process.env.MONGO_URI,
-};
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_secret_key

@@ -45,6 +45,32 @@ const getCategoryById = async (req, res, next) => {
   }
 };
 
+const getDefaultCategories = async (req, res, next) => {
+  try {
+    const categories = await categoryService.getDefaultCategories();
+    res.status(200).json({
+      success: true,
+      message: "Default categories retrieved successfully.",
+      data: categories
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const suggestCategory = async (req, res, next) => {
+  try {
+    const { merchant } = req.body;
+    const category = await categoryService.suggestCategory(merchant);
+    res.status(200).json({
+      success: true,
+      data: { category }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const updateCategory = async (req, res, next) => {
   try {
     const updateData = {};
@@ -87,6 +113,8 @@ module.exports = {
   createCategory,
   getCategories,
   getCategoryById,
+  getDefaultCategories,
+  suggestCategory,
   updateCategory,
   deleteCategory,
 };

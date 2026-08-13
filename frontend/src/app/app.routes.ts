@@ -9,6 +9,7 @@ import { ComingSoon } from './layout/coming-soon/coming-soon';
 import { BudgetPage } from './budget-page/budget-page';
 import { SettingsComponent } from './settings/settings';
 import { TaxEstimator } from './tax-estimator/tax-estimator';
+import { ReportsComponent } from './reports/reports';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -27,7 +28,7 @@ export const routes: Routes = [
       { path: 'transactions', component: TransactionsList },
       { path: 'budgets', component: BudgetPage },
       { path: 'tax-estimator', component: TaxEstimator },
-      { path: 'reports', component: ComingSoon },
+      { path: 'reports', component: ReportsComponent },
       { path: 'settings', component: SettingsComponent },
     ]
   },

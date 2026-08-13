@@ -88,6 +88,23 @@ TaxPal-Batch2
 - ✅ End-to-End Testing
 
 ---
+# 📌 Milestone 3 Features
+
+- ✅ Tax Estimation Module
+- ✅ Country/Region Selection
+- ✅ Tax Calculation Based on Regional Tax Slabs
+- ✅ Quarterly Tax Estimation
+- ✅ Tax Summary
+- ✅ Quarterly Tax Reminder Management
+- ✅ Calendar View for Tax Due Dates
+- ✅ Alert & Reminder Management
+- ✅ Tax Calculation APIs
+- ✅ MongoDB Atlas Integration
+- ✅ Frontend-Backend Integration
+- ✅ API Testing
+- ✅ End-to-End Testing
+
+---
 
 # 📊 Current Project Status
 
@@ -112,6 +129,8 @@ The following modules have been successfully completed and integrated:
 - Bug fixes and optimization
 - Project documentation
 - Git workflow implementation
+
+---
 
 ---
 
@@ -143,56 +162,42 @@ The following modules have been successfully implemented, tested, integrated, an
 
 ---
 
-# 🔀 Git Workflow
+## ✅ Milestone 3 Completed
 
-- `main` contains the latest stable implementation.
-- Every team member works on their own branch.
-- Changes are pushed to individual branches.
-- Pull Requests are reviewed before merging into `main`.
+The following modules have been successfully implemented, tested, integrated, and merged into the **main** branch:
 
----
-
-# 👥 Development Workflow
-
-1. Pull the latest changes from the `main` branch.
-2. Switch to your respective branch.
-3. Complete your assigned task.
-4. Test the implementation locally.
-5. Commit and push changes to your branch.
-6. Create a Pull Request.
-7. After review, merge into `main`.
-
----
-
-# 🎯 Milestone 1 Deliverables
-
-- Secure JWT-based Authentication
-- User Registration & Login
-- Income Management
-- Expense Management
-- Transaction Management
-- Interactive Financial Dashboard
-- RESTful Backend APIs
-- MongoDB Atlas Integration
-- Angular Frontend
-- Complete Frontend-Backend Integration
-- End-to-End Testing
-- Stable and Functional Application
+- Frontend Tax Estimation module implementation
+- Tax Calculator Interface
+- Country and Region Selection
+- Tax Estimation Engine
+- Tax Slab Calculation Logic
+- Quarterly Tax Calculation
+- Tax Summary implementation
+- Tax Reminder Management
+- Calendar View with Quarterly Tax Reminders
+- Alert Management Module
+- Database models implementation
+- MongoDB Atlas integration
+- Frontend-Backend integration
+- Runtime API testing
+- Authentication & Authorization testing
+- End-to-End application testing
+- Bug fixes and optimization
+- Project documentation updated
+- Git workflow implementation
 
 ---
 
-# 🎯 Milestone 2 Deliverables
+# 🎯 Milestone 3 Deliverables
 
-- Budget Management
-- Budget Planning
-- Budget Progress Tracking
-- Category Management
-- Category CRUD APIs
-- Default Categories
-- Smart Category Suggestions
-- Secure JWT Protected APIs
-- Request Validation
-- User Ownership Enforcement
+- Tax Calculator Interface
+- Country & Region Selection
+- Tax Estimation Engine
+- Tax Slab-Based Calculation
+- Quarterly Tax Estimation
+- Tax Summary
+- Calendar View with Quarterly Tax Reminders
+- Alert & Reminder Management
 - Angular Frontend
 - RESTful Backend APIs
 - MongoDB Atlas Integration
@@ -202,7 +207,6 @@ The following modules have been successfully implemented, tested, integrated, an
 - Stable and Functional Application
 
 ---
-
 
 # 👨‍💻 Team
 
@@ -227,11 +231,16 @@ The following modules have been successfully implemented, tested, integrated, an
 
 # ✅ Overall Project Status
 
-**Milestone 1 and Milestone 2 have been successfully completed.**
+**Milestone 1, Milestone 2, and Milestone 3 have been successfully completed.**
 
-- ✅ All planned frontend, backend, and database functionalities have been implemented.
+- ✅ All planned frontend, backend, and database functionalities have been successfully implemented.
+- ✅ User Authentication, Transaction Management, Dashboard, Budget Management, Category Management, and Tax Estimation modules are fully functional.
+- ✅ Quarterly Tax Reminder and Calendar features have been successfully implemented.
 - ✅ All APIs have been reviewed, tested, and validated.
 - ✅ Frontend and backend have been fully integrated.
-- ✅ End-to-end testing has been completed successfully.
-- ✅ All changes have been merged into the `main` branch following the team's Git workflow.
-- ✅ The application is stable and ready for **Milestone 3** development.
+- ✅ MongoDB Atlas integration has been completed successfully.
+- ✅ End-to-End testing has been completed successfully.
+- ✅ All changes have been merged into the **main** branch following the team's Git workflow.
+- ✅ The application is stable and ready for **Milestone 4 – Reporting & Export** development.
+
+

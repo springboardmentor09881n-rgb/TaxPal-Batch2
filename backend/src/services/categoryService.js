@@ -1,4 +1,5 @@
 const Category = require("../models/Category");
+const defaultCategories = require("../utils/defaultCategories");
 
 const formatCategory = (c) => {
   return {
@@ -39,6 +40,29 @@ const getCategoryById = async (id, userId) => {
   return formatCategory(category);
 };
 
+const getDefaultCategories = async () => {
+  return defaultCategories;
+};
+
+const suggestCategory = async (merchant) => {
+  if (!merchant) return "Others";
+  const name = merchant.toLowerCase();
+
+  if (name.includes("swiggy") || name.includes("zomato") || name.includes("food") || name.includes("restaurant")) {
+    return "Food";
+  }
+  if (name.includes("uber") || name.includes("ola") || name.includes("travel")) {
+    return "Travel";
+  }
+  if (name.includes("salary") || name.includes("paycheck")) {
+    return "Income";
+  }
+  if (name.includes("amazon") || name.includes("flipkart") || name.includes("shopping")) {
+    return "Shopping";
+  }
+  return "Others";
+};
+
 const updateCategory = async (id, userId, updateData) => {
   try {
     const category = await Category.findOneAndUpdate(
@@ -76,6 +100,8 @@ module.exports = {
   createCategory,
   getCategories,
   getCategoryById,
+  getDefaultCategories,
+  suggestCategory,
   updateCategory,
   deleteCategory,
 };
