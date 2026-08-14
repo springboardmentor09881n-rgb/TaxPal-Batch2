@@ -5,10 +5,12 @@ const generateReport = async (req, res, next) => {
   try {
     const { reportType, period, format, year } = req.body;
     
-    // Only pass allowed fields to service
+    // The periodResolver expects uppercase 'Q1', 'Q2' etc.
+    const servicePeriod = period.startsWith("q") ? period.toUpperCase() : period;
+
     const requestData = {
       reportType,
-      period,
+      period: servicePeriod,
       format,
       year,
     };
