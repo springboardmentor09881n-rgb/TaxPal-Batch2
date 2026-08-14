@@ -5,6 +5,7 @@ import { AuthService } from './auth';
 import { TransactionService, Transaction } from './transaction';
 import { BudgetService, Budget } from './budget.service';
 import { TaxEstimateService, TaxEstimateResult } from './tax-estimate';
+import { getCurrencySymbol } from '../utils/currency.util';
 
 export interface GeneratedReport {
   id: string;
@@ -138,16 +139,7 @@ export class ReportService {
     return { startDate, endDate, label };
   }
 
-  getCurrencySymbolForCountry(country: string): string {
-    if (!country) return '$';
-    const c = country.trim().toUpperCase();
-    if (c === 'US' || c === 'UNITED STATES') return '$';
-    if (c === 'CA' || c === 'CANADA') return 'CA$';
-    if (c === 'UK' || c === 'UNITED KINGDOM') return '£';
-    if (c === 'AU' || c === 'AUSTRALIA') return 'AU$';
-    if (c === 'IN' || c === 'INDIA') return '₹';
-    return '$';
-  }
+  // Removed duplicate currency symbol logic
 
   // Generates the report based on selections
   generateReport(type: 'income_statement' | 'tax_summary' | 'budget_performance', period: string, format: 'PDF' | 'CSV', targetYear: number = 2026): Observable<GeneratedReport> {
@@ -298,7 +290,7 @@ export class ReportService {
     const savedEstimate = estimates.find(e => e.quarter.toUpperCase() === qCode && e.year === year);
 
     if (savedEstimate) {
-      const currencySymbol = this.getCurrencySymbolForCountry(savedEstimate.country);
+      const currencySymbol = getCurrencySymbol(savedEstimate.country);
       return {
         metrics: {
           grossIncome: savedEstimate.grossIncomeForQuarter,
@@ -357,8 +349,8 @@ export class ReportService {
     else if (period === 'q3') dueDate = `September 15, ${year}`;
     else if (period === 'q4') dueDate = `January 15, ${year + 1}`;
 
-    const userCountry = user ? user.country : 'US';
-    const currencySymbol = this.getCurrencySymbolForCountry(userCountry);
+    const selectedCountry = this.taxEstimateService.getSelectedCountry();
+    const currencySymbol = getCurrencySymbol(selectedCountry);
 
     return {
       metrics: {
@@ -455,7 +447,10 @@ export class ReportService {
   downloadReportCSV(report: GeneratedReport): void {
     let csvContent = '';
     const d = report.data;
-    const currency = d.header.currencySymbol;
+    let currency = this.authService.getCurrencySymbol();
+    if (report.type === 'tax_summary') {
+      currency = getCurrencySymbol(this.taxEstimateService.getSelectedCountry());
+    }
 
     csvContent += `Report Name,${report.name}\n`;
     csvContent += `Period,${report.periodLabel}\n`;
@@ -534,9 +529,39 @@ export class ReportService {
   }
 
   downloadReportPDF(report: GeneratedReport): void {
+    let currency = this.authService.getCurrencySymbol();
+    if (report.type === 'tax_summary') {
+      currency = getCurrencySymbol(this.taxEstimateService.getSelectedCountry());
+    }
+    // autoPrint=true → browser's print/save dialog opens automatically on load
+    const htmlContent = this.buildReportHtml(report, currency, true);
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  // Opens a visual preview of the report WITHOUT triggering the print dialog.
+  // Used by the Eye (preview) button. Download button still uses downloadReportPDF.
+  previewReport(report: GeneratedReport): void {
     const d = report.data;
-    const currency = d.header.currencySymbol;
-    let htmlContent = `
+    let currency = this.authService.getCurrencySymbol();
+    if (report.type === 'tax_summary') {
+      currency = getCurrencySymbol(this.taxEstimateService.getSelectedCountry());
+    }
+
+    // Reuse the same HTML generation logic from downloadReportPDF but strip the print script.
+    // We call downloadReportPDF's html builder indirectly by temporarily monkey-patching window.open.
+    // Simpler: rebuild the full html inline with no auto-print.
+    let htmlContent = this.buildReportHtml(report, currency, false);
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  // Shared HTML builder. If autoPrint=true, triggers window.print() on load.
+  buildReportHtml(report: GeneratedReport, currency: string, autoPrint: boolean): string {
+    const d = report.data;
+    let html = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -561,10 +586,7 @@ export class ReportService {
           .status-badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 500; }
           .status-green { background: #dcfce7; color: #15803d; }
           .status-red { background: #fee2e2; color: #991b1b; }
-          @media print {
-            body { padding: 0; }
-            button { display: none; }
-          }
+          @media print { .no-print { display: none !important; } body { padding: 0; } }
         </style>
       </head>
       <body>
@@ -585,7 +607,7 @@ export class ReportService {
     `;
 
     if (report.type === 'income_statement') {
-      htmlContent += `
+      html += `
         <div class="metrics-grid">
           <div class="metric-card">
             <div class="metric-label">Total Income</div>
@@ -602,195 +624,78 @@ export class ReportService {
             </div>
           </div>
         </div>
-
         <div class="section-title">Income Breakdown</div>
-        <table>
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th style="text-align: right;">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${d.incomeBreakdown.map((row: any) => `
-              <tr>
-                <td>${row.category}</td>
-                <td style="text-align: right; font-weight: 500;">${this.formatCurrency(row.amount, currency)}</td>
-              </tr>
-            `).join('') || '<tr><td colspan="2">No income transactions found</td></tr>'}
-          </tbody>
-        </table>
-
+        <table><thead><tr><th>Category</th><th style="text-align:right;">Amount</th></tr></thead><tbody>
+          ${d.incomeBreakdown.map((row: any) => `<tr><td>${row.category}</td><td style="text-align:right;font-weight:500;">${this.formatCurrency(row.amount, currency)}</td></tr>`).join('') || '<tr><td colspan="2">No income transactions found</td></tr>'}
+        </tbody></table>
         <div class="section-title">Expense Breakdown</div>
-        <table>
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th style="text-align: right;">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${d.expenseBreakdown.map((row: any) => `
-              <tr>
-                <td>${row.category}</td>
-                <td style="text-align: right; font-weight: 500;">${this.formatCurrency(row.amount, currency)}</td>
-              </tr>
-            `).join('') || '<tr><td colspan="2">No expense transactions found</td></tr>'}
-          </tbody>
-        </table>
+        <table><thead><tr><th>Category</th><th style="text-align:right;">Amount</th></tr></thead><tbody>
+          ${d.expenseBreakdown.map((row: any) => `<tr><td>${row.category}</td><td style="text-align:right;font-weight:500;">${this.formatCurrency(row.amount, currency)}</td></tr>`).join('') || '<tr><td colspan="2">No expense transactions found</td></tr>'}
+        </tbody></table>
       `;
     } else if (report.type === 'tax_summary') {
-      htmlContent += `
+      html += `
         <div class="metrics-grid">
-          <div class="metric-card">
-            <div class="metric-label">Gross Income</div>
-            <div class="metric-value">${this.formatCurrency(d.metrics.grossIncome, currency)}</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Total Deductions</div>
-            <div class="metric-value">${this.formatCurrency(d.metrics.totalDeductions, currency)}</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Taxable Income</div>
-            <div class="metric-value">${this.formatCurrency(d.metrics.taxableIncome, currency)}</div>
-          </div>
+          <div class="metric-card"><div class="metric-label">Gross Income</div><div class="metric-value">${this.formatCurrency(d.metrics.grossIncome, currency)}</div></div>
+          <div class="metric-card"><div class="metric-label">Total Deductions</div><div class="metric-value">${this.formatCurrency(d.metrics.totalDeductions, currency)}</div></div>
+          <div class="metric-card"><div class="metric-label">Taxable Income</div><div class="metric-value">${this.formatCurrency(d.metrics.taxableIncome, currency)}</div></div>
         </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;">
           <div>
             <div class="section-title">Deductions Breakdown</div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Deduction Type</th>
-                  <th style="text-align: right;">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Business Expenses</td>
-                  <td style="text-align: right; font-weight: 500;">${this.formatCurrency(d.deductionsBreakdown.businessExpenses, currency)}</td>
-                </tr>
-                <tr>
-                  <td>Retirement Contributions</td>
-                  <td style="text-align: right; font-weight: 500;">${this.formatCurrency(d.deductionsBreakdown.retirement, currency)}</td>
-                </tr>
-                <tr>
-                  <td>Health Insurance Premiums</td>
-                  <td style="text-align: right; font-weight: 500;">${this.formatCurrency(d.deductionsBreakdown.healthInsurance, currency)}</td>
-                </tr>
-                <tr>
-                  <td>Home Office Deduction</td>
-                  <td style="text-align: right; font-weight: 500;">${this.formatCurrency(d.deductionsBreakdown.homeOffice, currency)}</td>
-                </tr>
-              </tbody>
-            </table>
+            <table><thead><tr><th>Deduction Type</th><th style="text-align:right;">Amount</th></tr></thead><tbody>
+              <tr><td>Business Expenses</td><td style="text-align:right;font-weight:500;">${this.formatCurrency(d.deductionsBreakdown.businessExpenses, currency)}</td></tr>
+              <tr><td>Retirement Contributions</td><td style="text-align:right;font-weight:500;">${this.formatCurrency(d.deductionsBreakdown.retirement, currency)}</td></tr>
+              <tr><td>Health Insurance Premiums</td><td style="text-align:right;font-weight:500;">${this.formatCurrency(d.deductionsBreakdown.healthInsurance, currency)}</td></tr>
+              <tr><td>Home Office Deduction</td><td style="text-align:right;font-weight:500;">${this.formatCurrency(d.deductionsBreakdown.homeOffice, currency)}</td></tr>
+            </tbody></table>
           </div>
-
           <div>
-            <div class="section-title">Tax Projections & Calculations</div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Tax Liability</th>
-                  <th style="text-align: right;">Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>National Tax</td>
-                  <td style="text-align: right; font-weight: 500;">${this.formatCurrency(d.taxCalculations.nationalTax, currency)}</td>
-                </tr>
-                <tr>
-                  <td>State Tax</td>
-                  <td style="text-align: right; font-weight: 500;">${this.formatCurrency(d.taxCalculations.stateTax, currency)}</td>
-                </tr>
-                <tr>
-                  <td>Effective Tax Rate</td>
-                  <td style="text-align: right; font-weight: 500;">${d.taxCalculations.effectiveTaxRate.toFixed(2)}%</td>
-                </tr>
-                <tr style="background: #f9fafb; font-weight: bold; border-top: 1px solid #e5e7eb;">
-                  <td>Total Estimated Tax</td>
-                  <td style="text-align: right; color: #b91c1c;">${this.formatCurrency(d.metrics.estimatedTax, currency)}</td>
-                </tr>
-                <tr>
-                  <td>Target Payment Due Date</td>
-                  <td style="text-align: right; font-style: italic;">${d.taxCalculations.dueDate}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="section-title">Tax Projections &amp; Calculations</div>
+            <table><thead><tr><th>Tax Liability</th><th style="text-align:right;">Value</th></tr></thead><tbody>
+              <tr><td>National Tax</td><td style="text-align:right;font-weight:500;">${this.formatCurrency(d.taxCalculations.nationalTax, currency)}</td></tr>
+              <tr><td>State Tax</td><td style="text-align:right;font-weight:500;">${this.formatCurrency(d.taxCalculations.stateTax, currency)}</td></tr>
+              <tr><td>Effective Tax Rate</td><td style="text-align:right;font-weight:500;">${d.taxCalculations.effectiveTaxRate.toFixed(2)}%</td></tr>
+              <tr style="background:#f9fafb;font-weight:bold;"><td>Total Estimated Tax</td><td style="text-align:right;color:#b91c1c;">${this.formatCurrency(d.metrics.estimatedTax, currency)}</td></tr>
+              <tr><td>Target Payment Due Date</td><td style="text-align:right;font-style:italic;">${d.taxCalculations.dueDate}</td></tr>
+            </tbody></table>
           </div>
         </div>
       `;
     } else if (report.type === 'budget_performance') {
-      htmlContent += `
+      html += `
         <div class="metrics-grid">
-          <div class="metric-card">
-            <div class="metric-label">Total Limit</div>
-            <div class="metric-value">${this.formatCurrency(d.metrics.totalLimit, currency)}</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Actual Spent</div>
-            <div class="metric-value" style="color: ${d.metrics.overBudget ? '#b91c1c' : '#111827'};">${this.formatCurrency(d.metrics.totalActualSpent, currency)}</div>
-          </div>
-          <div class="metric-card ${d.metrics.overBudget ? 'alert' : ''}">
-            <div class="metric-label">Remaining Balance</div>
-            <div class="metric-value" style="color: ${d.metrics.remainingBalance >= 0 ? '#15803d' : '#b91c1c'};">
-              ${this.formatCurrency(d.metrics.remainingBalance, currency)}
-            </div>
-          </div>
+          <div class="metric-card"><div class="metric-label">Total Limit</div><div class="metric-value">${this.formatCurrency(d.metrics.totalLimit, currency)}</div></div>
+          <div class="metric-card"><div class="metric-label">Actual Spent</div><div class="metric-value" style="color:${d.metrics.overBudget ? '#b91c1c' : '#111827'};">${this.formatCurrency(d.metrics.totalActualSpent, currency)}</div></div>
+          <div class="metric-card ${d.metrics.overBudget ? 'alert' : ''}"><div class="metric-label">Remaining Balance</div><div class="metric-value" style="color:${d.metrics.remainingBalance >= 0 ? '#15803d' : '#b91c1c'};">${this.formatCurrency(d.metrics.remainingBalance, currency)}</div></div>
         </div>
-
         <div class="section-title">Category Performance Detail</div>
-        <table>
-          <thead>
+        <table><thead><tr><th>Category</th><th style="text-align:right;">Budget Limit</th><th style="text-align:right;">Actual Spent</th><th style="text-align:right;">Variance</th><th style="text-align:center;">Status</th></tr></thead><tbody>
+          ${d.categoryPerformance.map((row: any) => `
             <tr>
-              <th>Category</th>
-              <th style="text-align: right;">Budget Limit</th>
-              <th style="text-align: right;">Actual Spent</th>
-              <th style="text-align: right;">Variance</th>
-              <th style="text-align: center;">Status</th>
+              <td><strong>${row.categoryName}</strong></td>
+              <td style="text-align:right;">${this.formatCurrency(row.budgetLimit, currency)}</td>
+              <td style="text-align:right;">${this.formatCurrency(row.actualSpent, currency)}</td>
+              <td style="text-align:right;font-weight:500;color:${row.variance >= 0 ? '#15803d' : '#b91c1c'};">${ row.variance >= 0 ? '+' : ''}${this.formatCurrency(row.variance, currency)}</td>
+              <td style="text-align:center;"><span class="status-badge ${row.status === 'On Track' ? 'status-green' : 'status-red'}">${row.status}</span></td>
             </tr>
-          </thead>
-          <tbody>
-            ${d.categoryPerformance.map((row: any) => `
-              <tr>
-                <td><strong>${row.categoryName}</strong></td>
-                <td style="text-align: right;">${this.formatCurrency(row.budgetLimit, currency)}</td>
-                <td style="text-align: right;">${this.formatCurrency(row.actualSpent, currency)}</td>
-                <td style="text-align: right; font-weight: 500; color: ${row.variance >= 0 ? '#15803d' : '#b91c1c'};">
-                  ${row.variance >= 0 ? '+' : ''}${this.formatCurrency(row.variance, currency)}
-                </td>
-                <td style="text-align: center;">
-                  <span class="status-badge ${row.status === 'On Track' ? 'status-green' : 'status-red'}">
-                    ${row.status}
-                  </span>
-                </td>
-              </tr>
-            `).join('') || '<tr><td colspan="5" style="text-align: center;">No budget/spending categories found</td></tr>'}
-          </tbody>
-        </table>
+          `).join('') || '<tr><td colspan="5" style="text-align:center;">No budget/spending categories found</td></tr>'}
+        </tbody></table>
       `;
     }
 
-    htmlContent += `
-        <div style="margin-top: 50px; text-align: center; font-size: 11px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+    html += `
+        <div style="margin-top:50px;text-align:center;font-size:11px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:20px;">
           Generated automatically by TaxPal Financial Planning Platform. All rights reserved &copy; 2026.
         </div>
-        
-        <script>
-          window.onload = function() {
-            setTimeout(function() {
-              window.print();
-            }, 500);
-          };
-        </script>
+        <div class="no-print" style="position:fixed;bottom:24px;right:24px;display:flex;gap:10px;">
+          <button onclick="window.print()" style="background:#1a73e8;color:#fff;border:none;padding:10px 22px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;">Print / Save PDF</button>
+          <button onclick="window.close()" style="background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;padding:10px 22px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;">Close</button>
+        </div>
+        ${ autoPrint ? '<script>window.onload=function(){setTimeout(function(){window.print();},500);};<\/script>' : '' }
       </body>
       </html>
     `;
-
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    return html;
   }
 }

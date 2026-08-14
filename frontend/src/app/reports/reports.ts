@@ -93,6 +93,8 @@ export class ReportsComponent implements OnInit {
 
   onPreview(report: GeneratedReport): void {
     this.selectedReport = report;
+    // Opens the report in a new tab WITHOUT triggering the print/download dialog
+    this.reportService.previewReport(report);
   }
 
   onDownload(report: GeneratedReport): void {

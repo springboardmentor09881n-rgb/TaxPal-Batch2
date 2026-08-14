@@ -428,6 +428,7 @@ export class TaxEstimator implements OnInit {
   private updateCountryFields(country: string): void {
     const config = this.countryConfigs[country];
     if (config) {
+      this.taxEstimateService.setSelectedCountry(country);
       this.currencySymbol = config.currencySymbol;
       this.availableStates = config.states;
       this.hasStates = config.hasStates;

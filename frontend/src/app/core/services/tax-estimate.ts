@@ -35,7 +35,6 @@ export interface TaxEstimateResult extends TaxEstimateInput {
 export class TaxEstimateService {
   private apiUrl = `${environment.apiUrl}/tax-estimates`;
 
-  // Bidirectional country code map
   private countryMap: { [key: string]: string } = {
     'US': 'United States',
     'CA': 'Canada',
@@ -43,6 +42,17 @@ export class TaxEstimateService {
     'UK': 'United Kingdom',
     'AU': 'Australia'
   };
+
+  private selectedCountry = 'US';
+
+  setSelectedCountry(country: string) {
+    this.selectedCountry = country;
+    localStorage.setItem('tax_estimator_selected_country', country);
+  }
+
+  getSelectedCountry(): string {
+    return localStorage.getItem('tax_estimator_selected_country') || 'US';
+  }
 
   private reverseCountryMap: { [key: string]: string } = {
     'United States': 'US',

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { getCurrencySymbol } from '../utils/currency.util';
 
 @Injectable({
   providedIn: 'root'
@@ -57,13 +58,6 @@ export class AuthService {
   getCurrencySymbol(): string {
     const user = this.currentUser;
     const country = user ? user.country : 'IN'; // Default to IN (Rupees)
-    switch (country) {
-      case 'US': return '$';
-      case 'CA': return 'CA$';
-      case 'UK': return '£';
-      case 'AU': return 'AU$';
-      case 'IN': return '₹';
-      default: return '₹';
-    }
+    return getCurrencySymbol(country);
   }
 }

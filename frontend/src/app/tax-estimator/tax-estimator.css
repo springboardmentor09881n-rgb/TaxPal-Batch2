@@ -141,15 +141,16 @@
 
 .currency-prefix {
   position: absolute;
-  left: 1rem;
+  left: 0.85rem;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 600;
   pointer-events: none;
   font-size: 0.95rem;
+  z-index: 2;
 }
 
 .input-prefix-container input {
-  padding-left: 2.2rem;
+  padding-left: 3.5rem;
 }
 
 .divider {
