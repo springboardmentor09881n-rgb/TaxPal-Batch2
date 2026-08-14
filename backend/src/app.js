@@ -17,6 +17,7 @@ const authRoutes = require("./routes/authRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const taxCalendarRoutes = require("./routes/taxCalendarRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 
 // Use Routes
 // app.use("/api/tax-policy", taxPolicyRoutes);
@@ -24,6 +25,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/tax-calendar", taxCalendarRoutes);
+app.use("/api/reports", reportRoutes);
 
 // Default Route
 app.get("/", (req, res) => {
