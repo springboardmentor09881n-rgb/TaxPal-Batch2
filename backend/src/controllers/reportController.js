@@ -6,7 +6,7 @@ const {
 const getReport = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { reportType, period } = req.query;
+    const { reportType, period, format } = req.query;
 
     if (!reportType) {
       return res.status(400).json({
@@ -25,7 +25,8 @@ const getReport = async (req, res) => {
     const report = await generateReport(
       userId,
       reportType,
-      period
+      period,
+      format || "PDF"
     );
 
     return res.status(200).json({
