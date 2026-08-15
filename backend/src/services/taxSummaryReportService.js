@@ -6,11 +6,8 @@ const generateTaxSummary = async (userId, period) => {
   const query = {
     userId,
     year: currentYear,
+    quarter: period.toUpperCase(),
   };
-
-  if (["q1", "q2", "q3", "q4"].includes(period)) {
-    query.quarter = period.toUpperCase();
-  }
 
   const taxEstimates = await TaxEstimate.find(query).sort({
     dueDate: 1,
@@ -18,23 +15,47 @@ const generateTaxSummary = async (userId, period) => {
 
   let totalGrossIncome = 0;
   let totalDeductions = 0;
+  let totalTaxableIncome = 0;
   let totalEstimatedTax = 0;
+  let totalNationalTax = 0;
+  let totalStateTax = 0;
 
   for (const estimate of taxEstimates) {
-    totalGrossIncome += Number(estimate.grossIncome) || 0;
-    totalDeductions += Number(estimate.deductions) || 0;
+    totalGrossIncome += Number(estimate.grossIncomeForQuarter) || 0;
+    totalDeductions += Number(estimate.totalDeductions) || 0;
+    totalTaxableIncome += Number(estimate.taxableIncome) || 0;
     totalEstimatedTax += Number(estimate.estimatedTax) || 0;
+    totalNationalTax += Number(estimate.nationalTax) || 0;
+    totalStateTax += Number(estimate.stateTax) || 0;
   }
 
-  const totalTaxableIncome = totalGrossIncome - totalDeductions;
+  const effectiveTaxRate =
+    totalGrossIncome > 0
+      ? Math.round(
+          (totalEstimatedTax / totalGrossIncome) * 10000
+        ) / 100
+      : 0;
+
+  const dueDate =
+    taxEstimates.length > 0
+      ? taxEstimates[0].dueDate
+      : null;
 
   return {
     period,
     year: currentYear,
+
     totalGrossIncome,
     totalDeductions,
     totalTaxableIncome,
+
     totalEstimatedTax,
+    totalNationalTax,
+    totalStateTax,
+    effectiveTaxRate,
+
+    dueDate,
+
     quarters: taxEstimates,
   };
 };

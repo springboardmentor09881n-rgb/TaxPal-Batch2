@@ -4,34 +4,13 @@ const router = express.Router();
 
 const {
   getReport,
-  previewReport,
-  checkReportFile,
+  getReportPreview,
 } = require("../controllers/reportController");
 
-const {
-  protect,
-} = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
+router.get("/", protect, getReport);
 
-router.get(
-  "/",
-  protect,
-  getReport
-);
-
-
-router.get(
-  "/:id/preview",
-  protect,
-  previewReport
-);
-
-
-router.get(
-  "/:id/file",
-  protect,
-  checkReportFile
-);
-
+router.get("/:id/preview", protect, getReportPreview);
 
 module.exports = router;
